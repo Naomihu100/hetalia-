@@ -16,6 +16,8 @@
     --map-fill: #dcdcdc;
     --map-hover: #b3d4ff;
     --map-selected: #4a90e2;
+    --zoom-btn-bg: rgba(255,255,255,0.9);
+    --zoom-btn-shadow: 0 6px 18px rgba(12,18,31,0.08);
   }
 
   * { box-sizing: border-box; }
@@ -28,7 +30,7 @@
 
   #container { display:flex; height:100vh; width:100%; }
   #map { flex: 1; min-width: 0; position: relative; background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%); }
-  svg { width:100%; height:100%; display:block; }
+  svg { width:100%; height:100%; display:block; touch-action: none; }
 
   .country {
     fill: var(--map-fill);
@@ -91,6 +93,7 @@
     cursor: pointer;
     border: 1px solid #e5e7eb;
     flex-shrink: 0;
+    touch-action: manipulation;
   }
   .art-meta { flex: 1; min-width: 0; }
   .wiki-link {
@@ -132,6 +135,32 @@
     color: var(--text);
     margin: 0;
   }
+
+  /* zoom controls */
+  .zoom-controls {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+  }
+  .zoom-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--zoom-btn-bg);
+    box-shadow: var(--zoom-btn-shadow);
+    border: 1px solid #e6eef8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    font-weight: 600;
+    user-select: none;
+  }
+  .zoom-btn:active { transform: scale(0.98); }
 
   #tooltip {
     position:absolute;
@@ -181,6 +210,24 @@
       border-left:none;
       border-top:1px solid var(--line);
     }
+    /* mobile: larger tappable areas */
+    .thumb { width: 120px; height: 90px; }
+    .wiki-link { font-size: 1rem; }
+    .zoom-btn { width: 52px; height: 52px; border-radius: 12px; }
+    /* mobile modal full-screen */
+    #modal .modal-inner {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 0;
+      padding: 12px 12px 24px 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      align-items:stretch;
+    }
+    #modal img { max-height: calc(100vh - 200px); object-fit: contain; }
   }
 </style>
 </head>
@@ -196,6 +243,12 @@
       <p class="no-art">点选地图上的国家以查看对应画作。</p>
     </div>
   </aside>
+</div>
+
+<div class="zoom-controls" aria-hidden="false">
+  <button id="zoomIn" class="zoom-btn" aria-label="放大">+</button>
+  <button id="zoomOut" class="zoom-btn" aria-label="缩小">−</button>
+  <button id="zoomReset" class="zoom-btn" aria-label="重置">◯</button>
 </div>
 
 <div id="modal" aria-hidden="true">
@@ -245,7 +298,6 @@ const numericCountryToIso2 = {
   '756': 'CH'
 };
 
-// 英文名 -> 中文名 对照，用于在侧栏与 tooltip 显示中文（例如：德国 -> 德国 (Germany)）
 const englishToChinese = {
   'China': '中国',
   'Japan': '日本',
@@ -285,13 +337,15 @@ const height = Math.max(400, window.innerHeight);
 const svg = d3.select("#map").append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet");
-// g: all country paths go into this group so zoom transforms it
+// group for countries so zoom transforms this group
 const g = svg.append('g').attr('id', 'countries');
 const tooltip = d3.select("#tooltip");
 const projection = d3.geoMercator()
   .scale((width / 2 / Math.PI) * 1.1)
   .translate([width / 2, height / 1.8]);
 const path = d3.geoPath().projection(projection);
+
+let zoomBehavior; // store zoom so controls can call it
 
 function getNumericIso2(d) {
   const id = String(d && d.id || '');
@@ -352,7 +406,7 @@ function renderMap() {
         });
 
     // enable zoom/pan on the svg, transforming the countries group
-    const zoom = d3.zoom()
+    zoomBehavior = d3.zoom()
       .scaleExtent([1, 8])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
@@ -360,11 +414,30 @@ function renderMap() {
         g.selectAll('.country').style('stroke-width', (0.5 / event.transform.k));
       });
 
-    svg.call(zoom);
+    svg.call(zoomBehavior);
+
+    // attach zoom control buttons
+    attachZoomControls();
 
   }).catch(err => {
     document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 TopoJSON 连接。</p>';
     console.error(err);
+  });
+}
+
+function attachZoomControls() {
+  const zoomIn = document.getElementById('zoomIn');
+  const zoomOut = document.getElementById('zoomOut');
+  const zoomReset = document.getElementById('zoomReset');
+
+  zoomIn.addEventListener('click', () => {
+    svg.transition().duration(250).call(zoomBehavior.scaleBy, 1.4);
+  });
+  zoomOut.addEventListener('click', () => {
+    svg.transition().duration(250).call(zoomBehavior.scaleBy, 1 / 1.4);
+  });
+  zoomReset.addEventListener('click', () => {
+    svg.transition().duration(350).call(zoomBehavior.transform, d3.zoomIdentity);
   });
 }
 
@@ -531,6 +604,21 @@ function openModal(art) {
   document.getElementById('modal').style.display = 'flex';
 }
 
+// mobile: allow swipe down to close modal (basic)
+let modalTouchStartY = null;
+document.getElementById('modal').addEventListener('touchstart', (e) => {
+  if (e.touches && e.touches[0]) modalTouchStartY = e.touches[0].clientY;
+});
+document.getElementById('modal').addEventListener('touchmove', (e) => {
+  if (!modalTouchStartY) return;
+  const y = e.touches[0].clientY;
+  const diff = y - modalTouchStartY;
+  if (diff > 120) { // swipe down threshold
+    closeModal();
+    modalTouchStartY = null;
+  }
+});
+
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
 }
@@ -586,6 +674,13 @@ document.getElementById('closeModal').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') closeModal();
 });
+
+// prevent page scrolling while interacting with map on touch devices
+// (touch-action:none on svg helps but this prevents accidental page scroll when touching map container)
+let isTouchingMap = false;
+const mapEl = document.getElementById('map');
+mapEl.addEventListener('touchstart', () => { isTouchingMap = true; }, { passive: true });
+mapEl.addEventListener('touchend', () => { isTouchingMap = false; }, { passive: true });
 
 renderMap();
 handleHashOnLoad();
