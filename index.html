@@ -42,9 +42,9 @@
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
-  /* sidebar is hidden by default until a country is selected */
+  /* sidebar is visually hidden by default; animates in when .visible is added */
   #sidebar {
-    display: none;
+    /* keep in layout but hidden visually for smoother animation */
     width: 380px;
     max-width: 42vw;
     background: var(--panel);
@@ -52,7 +52,21 @@
     box-shadow: -4px 0 12px rgba(0,0,0,0.04);
     padding: 16px;
     overflow: auto;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(8px);
+    transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
+    pointer-events: none; /* prevent interaction when hidden */
   }
+  /* visible state: fade/slide in */
+  #sidebar.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
   .sidebar-header {
     display:flex;
     justify-content:space-between;
@@ -348,6 +362,7 @@ const projection = d3.geoMercator()
 const path = d3.geoPath().projection(projection);
 
 let zoomBehavior; // store zoom so controls can call it
+const sidebarEl = document.getElementById('sidebar');
 
 function getNumericIso2(d) {
   const id = String(d && d.id || '');
@@ -444,8 +459,8 @@ function attachZoomControls() {
 }
 
 function showArtworksForCountry(d) {
-  // ensure sidebar is visible when showing artworks
-  document.getElementById('sidebar').style.display = '';
+  // add visible class to animate sidebar in
+  sidebarEl.classList.add('visible');
 
   const englishName = getCountryDisplayName(d); // 用于哈希与匹配
   const localized = getLocalizedDisplay(d); // 用于侧栏显示
@@ -532,8 +547,8 @@ function showArtworksForCountry(d) {
 }
 
 function showSubpage(countryEnglishName, artIndex, arts) {
-  // make sure sidebar is visible when opening a subpage
-  document.getElementById('sidebar').style.display = '';
+  // add visible class to animate sidebar in
+  sidebarEl.classList.add('visible');
 
   const container = document.getElementById('countryInfo');
   const art = arts[artIndex];
@@ -634,8 +649,8 @@ function closeModal() {
 function clearSelection() {
   g.selectAll('.country').classed('selected', false);
   document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
-  // hide sidebar again when cleared
-  document.getElementById('sidebar').style.display = 'none';
+  // remove visible class to animate sidebar out
+  sidebarEl.classList.remove('visible');
   history.pushState(null, '', '#');
 }
 
@@ -667,8 +682,8 @@ function handleHashOnLoad() {
         .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
         .classed('selected', true);
 
-      // show sidebar before rendering
-      document.getElementById('sidebar').style.display = '';
+      // animate sidebar in
+      sidebarEl.classList.add('visible');
 
       const arts = artworkData[getCountryKey(feature)] || artworkData[getCountryDisplayName(feature)] || artworkData[feature.properties?.name];
       if (arts && arts[artIndex]) {
