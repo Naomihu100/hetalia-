@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>按国家展示画作 — Hetalia</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --line: #dfe7f1;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --link: #0645ad;
+    --link-hover: #0a3d91;
+    --map-fill: #dcdcdc;
+    --map-hover: #b3d4ff;
+    --map-selected: #4a90e2;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  #container { display:flex; height:100vh; width:100%; }
+  #map { flex: 1; min-width: 0; position: relative; background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%); }
+  svg { width:100%; height:100%; display:block; }
+
+  .country {
+    fill: var(--map-fill);
+    stroke: #fff;
+    stroke-width: 0.5;
+    cursor: pointer;
+    transition: fill 0.15s ease;
+  }
+  .country:hover { fill: var(--map-hover); }
+  .country.selected { fill: var(--map-selected); }
+
+  #sidebar {
+    width: 380px;
+    max-width: 42vw;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    box-shadow: -4px 0 12px rgba(0,0,0,0.04);
+    padding: 16px;
+    overflow: auto;
+  }
+  .sidebar-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom: 12px;
+  }
+  #sidebar h2 { margin:0; font-size: 1.05rem; }
+
+  .btn-close, .mini-link {
+    background: #eef2f7;
+    border: 1px solid #dbe3ec;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+  }
+  .btn-close:hover, .mini-link:hover { background: #e4ebf5; }
+
+  .no-art {
+    color: var(--muted);
+    padding: 10px 0;
+    margin: 0;
+  }
+
+  .country-title { font-size: 1.1rem; margin: 0 0 8px; }
+  .art-list { display:flex; flex-direction:column; gap:12px; }
+  .art-item {
+    display:flex;
+    gap:12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+  }
+  .thumb {
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+  .art-meta { flex: 1; min-width: 0; }
+  .wiki-link {
+    color: var(--link);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .wiki-link:hover { color: var(--link-hover); }
+  .art-year {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+  .art-desc {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+  .detail-container { display:flex; flex-direction:column; gap:10px; }
+  .detail-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom: 8px;
+  }
+  .detail-image {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f8f9fb;
+    border: 1px solid #edf1f5;
+  }
+  .detail-text {
+    line-height: 1.7;
+    color: var(--text);
+    margin: 0;
+  }
+
+  #tooltip {
+    position:absolute;
+    pointer-events:none;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    display:none;
+    z-index: 10;
+  }
+
+  #modal {
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background: rgba(0,0,0,0.6);
+    z-index:30;
+    padding: 24px;
+  }
+  #modal .modal-inner {
+    background:#fff;
+    padding: 18px;
+    border-radius: 12px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow:auto;
+    box-shadow: 0 18px 42px rgba(0,0,0,0.2);
+  }
+  #modal img {
+    max-width:100%;
+    height:auto;
+    display:block;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  @media (max-width: 800px) {
+    #container { flex-direction:column; }
+    #sidebar {
+      width:100%;
+      max-width:100%;
+      max-height:45vh;
+      border-left:none;
+      border-top:1px solid var(--line);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="map"><div id="tooltip"></div></div>
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <h2>请选择一个国家</h2>
+      <button id="clearBtn" class="btn-close">清除</button>
+    </div>
+    <div id="countryInfo">
+      <p class="no-art">点选地图上的国家以查看对应画作。</p>
+    </div>
+  </aside>
+</div>
+
+<div id="modal" aria-hidden="true">
+  <div class="modal-inner">
+    <button id="closeModal" class="btn-close" style="float:right">关闭</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+const geojsonUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+const numericCountryToIso2 = {
+  '156': 'CN',
+  '392': 'JP',
+  '250': 'FR',
+  '840': 'US',
+  '124': 'CA',
+  '276': 'DE',
+  '826': 'GB',
+  '380': 'IT',
+  '643': 'RU',
+  '356': 'IN',
+  '710': 'ZA',
+  '76': 'BR',
+  '484': 'MX',
+  '032': 'AR',
+  '036': 'AU',
+  '554': 'NZ',
+  '704': 'VN',
+  '764': 'TH',
+  '702': 'SG',
+  '360': 'ID',
+  '458': 'MY',
+  '608': 'PH',
+  '410': 'KR',
+  '804': 'UA',
+  '398': 'KZ',
+  '050': 'BD',
+  '344': 'HK',
+  '528': 'NL',
+  '724': 'ES',
+  '752': 'SE',
+  '203': 'CZ',
+  '756': 'CH'
+};
+
+const artworkData = {
+  "CN": [
+    { title: "中国的记忆", url: "China.png", year: 2026, desc: "0000" }
+  ],
+  "JP": [
+    { title: "富士山之梦", url: "https://picsum.photos/id/1011/1200/800", year: 2024, desc: "0000" },
+    { title: "都市夜景", url: "https://picsum.photos/id/1025/1200/800", year: 2023, desc: "0000" }
+  ],
+  "FR": [
+    { title: "巴黎光影", url: "https://picsum.photos/id/1003/1200/800", year: 2022, desc: "0000" }
+  ],
+  "United States": [
+    { title: "大地之色", url: "https://picsum.photos/id/1015/1200/800", year: 2021, desc: "0000" }
+  ]
+};
+
+
+const width = Math.max(700, window.innerWidth * 0.6);
+const height = Math.max(400, window.innerHeight);
+const svg = d3.select("#map").append("svg")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("preserveAspectRatio", "xMidYMid meet");
+const tooltip = d3.select("#tooltip");
+const projection = d3.geoMercator()
+  .scale((width / 2 / Math.PI) * 1.1)
+  .translate([width / 2, height / 1.8]);
+const path = d3.geoPath().projection(projection);
+
+function getNumericIso2(d) {
+  const id = String(d && d.id || '');
+  return numericCountryToIso2[id] || null;
+}
+
+function getCountryKey(d) {
+  const iso2 = getNumericIso2(d);
+  if (iso2) return iso2;
+
+  const props = d && d.properties ? d.properties : {};
+  const name = props.name || props.NAME || props.ADMIN || '';
+  const normalized = name.trim();
+  if (normalized) return normalized;
+  return null;
+}
+
+function getCountryDisplayName(d) {
+  const props = d && d.properties ? d.properties : {};
+  return props.name || props.NAME || props.ADMIN || getCountryKey(d) || '';
+}
+
+function propNameToEnglish(name) {
+  const map = { '中国': 'China', '日本': 'Japan', '美国': 'United States' };
+  return map[name] || name;
+}
+
+function renderMap() {
+  d3.json(geojsonUrl).then(world => {
+    const countries = topojson.feature(world, world.objects.countries);
+
+    svg.append("g")
+      .selectAll("path")
+      .data(countries.features)
+      .join("path")
+        .attr("class", "country")
+        .attr("d", path)
+        .on("mouseover", (event, d) => {
+          d3.select(event.currentTarget).raise();
+          tooltip.style("display", "block").text(getCountryDisplayName(d));
+        })
+        .on("mousemove", (event) => {
+          tooltip.style("left", (event.pageX + 12) + "px")
+                 .style("top", (event.pageY + 12) + "px");
+        })
+        .on("mouseout", () => {
+          tooltip.style("display", "none");
+        })
+        .on("click", (event, d) => {
+          svg.selectAll(".country").classed("selected", false);
+          d3.select(event.currentTarget).classed("selected", true);
+          showArtworksForCountry(d);
+        });
+  }).catch(err => {
+    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 TopoJSON 连接。</p>';
+    console.error(err);
+  });
+}
+
+function showArtworksForCountry(d) {
+  const key = getCountryKey(d);
+  const name = getCountryDisplayName(d);
+  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), name, propNameToEnglish(name)];
+  let arts = null;
+
+  for (const k of possibleKeys) {
+    if (!k) continue;
+    if (artworkData[k]) {
+      arts = artworkData[k];
+      break;
+    }
+  }
+
+  if (!arts && artworkData[name]) arts = artworkData[name];
+
+  const container = document.getElementById('countryInfo');
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'detail-header';
+
+  const title = document.createElement('h3');
+  title.className = 'country-title';
+  title.textContent = name;
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn-close';
+  backBtn.textContent = '回到地图';
+  backBtn.onclick = () => clearSelection();
+
+  header.appendChild(title);
+  header.appendChild(backBtn);
+  container.appendChild(header);
+
+  if (!arts || arts.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'no-art';
+    p.textContent = '该国家暂无画作，您可以在 artworkData 中加入对应作品。';
+    container.appendChild(p);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'art-list';
+
+  arts.forEach((art, idx) => {
+    const item = document.createElement('div');
+    item.className = 'art-item';
+
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.src = art.url;
+    img.alt = art.title || '';
+    img.onclick = () => openModal(art);
+
+    const meta = document.createElement('div');
+    meta.className = 'art-meta';
+
+    const titleLink = document.createElement('span');
+    titleLink.className = 'wiki-link';
+    titleLink.textContent = art.title || 'Untitled';
+    titleLink.onclick = () => showSubpage(name, idx, arts);
+
+    const year = document.createElement('div');
+    year.className = 'art-year';
+    year.textContent = art.year ? String(art.year) : '';
+
+    const desc = document.createElement('div');
+    desc.className = 'art-desc';
+    desc.textContent = art.desc || '';
+
+    meta.appendChild(titleLink);
+    meta.appendChild(year);
+    meta.appendChild(desc);
+    item.appendChild(img);
+    item.appendChild(meta);
+    list.appendChild(item);
+  });
+
+  container.appendChild(list);
+}
+
+function showSubpage(countryName, artIndex, arts) {
+  const container = document.getElementById('countryInfo');
+  const art = arts[artIndex];
+  if (!art) return;
+
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'detail-header';
+
+  const title = document.createElement('h3');
+  title.className = 'country-title';
+  title.textContent = art.title || countryName;
+
+  const back = document.createElement('button');
+  back.className = 'mini-link';
+  back.textContent = '← 返回列表';
+  back.onclick = () => {
+    const features = svg.selectAll('path').data();
+    const feature = features.find(f => getCountryDisplayName(f) === countryName);
+    if (feature) showArtworksForCountry(feature);
+    else {
+      document.getElementById('countryInfo').innerHTML = '<p class="no-art">无法找到该国家的地图数据。</p>';
+    }
+    history.pushState(null, '', '#');
+  };
+
+  header.appendChild(title);
+  header.appendChild(back);
+  container.appendChild(header);
+
+  const detail = document.createElement('div');
+  detail.className = 'detail-container';
+
+  const img = document.createElement('img');
+  img.className = 'detail-image';
+  img.src = art.url;
+  img.alt = art.title || '';
+  img.onclick = () => openModal(art);
+
+  const desc = document.createElement('p');
+  desc.className = 'detail-text';
+  desc.textContent = art.desc || '';
+
+  if (art.year) {
+    const year = document.createElement('p');
+    year.className = 'detail-text';
+    year.textContent = '年份：' + art.year;
+    detail.appendChild(year);
+  }
+
+  detail.appendChild(img);
+  detail.appendChild(desc);
+  container.appendChild(detail);
+
+  history.pushState(null, '', `#art/${encodeURIComponent(countryName)}/${artIndex}`);
+}
+
+function openModal(art) {
+  const modalContent = document.getElementById('modalContent');
+  modalContent.innerHTML = '';
+
+  const h = document.createElement('h3');
+  h.textContent = art.title || '';
+
+  const img = document.createElement('img');
+  img.src = art.url;
+  img.alt = art.title || '';
+
+  const p = document.createElement('p');
+  p.textContent = art.desc || '';
+
+  modalContent.appendChild(h);
+  modalContent.appendChild(img);
+  modalContent.appendChild(p);
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+function clearSelection() {
+  svg.selectAll('.country').classed('selected', false);
+  document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
+  history.pushState(null, '', '#');
+}
+
+function handleHashOnLoad() {
+  const hash = location.hash || '';
+  if (!hash) return;
+  const match = hash.match(/^#art\/(.+)\/(\d+)$/);
+  if (!match) return;
+
+  const countryName = decodeURIComponent(match[1]);
+  const artIndex = Number(match[2]);
+
+  const tryShow = () => {
+    const features = svg.selectAll('path').data();
+    if (!features || features.length === 0) {
+      setTimeout(tryShow, 200);
+      return;
+    }
+
+    const feature = features.find(f => {
+      const name = getCountryDisplayName(f);
+      const key = getCountryKey(f);
+      return name === countryName || key === countryName || (f.properties && (f.properties.name === countryName || f.properties.ADMIN === countryName));
+    });
+
+    if (feature) {
+      svg.selectAll('.country').classed('selected', false);
+      svg.selectAll('path')
+        .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
+        .classed('selected', true);
+
+      const arts = artworkData[getCountryKey(feature)] || artworkData[getCountryDisplayName(feature)] || artworkData[feature.properties?.name];
+      if (arts && arts[artIndex]) {
+        showSubpage(getCountryDisplayName(feature), artIndex, arts);
+      } else {
+        showArtworksForCountry(feature);
+      }
+    }
+  };
+
+  tryShow();
+}
+
+document.getElementById('clearBtn').addEventListener('click', clearSelection);
+document.getElementById('closeModal').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+renderMap();
+handleHashOnLoad();
+</script>
+</body>
+</html>
