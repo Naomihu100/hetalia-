@@ -152,6 +152,40 @@
     margin: 0;
   }
 
+  /* hover preview card for desktop */
+  .hover-preview {
+    position: absolute;
+    pointer-events: none; /* let mouse events pass through */
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+    border: 1px solid rgba(14, 41, 77, 0.08);
+    box-shadow: 0 8px 24px rgba(12,18,31,0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    width: 260px;
+    max-width: 38vw;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    align-items: center;
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition: opacity 180ms ease, transform 180ms ease;
+    z-index: 60;
+  }
+  .hover-preview.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .hover-preview img { width: 120px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #eef2f7; }
+  .hover-preview .hp-meta { display:flex; flex-direction:column; gap:6px; }
+  .hover-preview .hp-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .hover-preview .hp-year { color: var(--muted); font-size: 0.85rem; }
+
+  /* hide hover preview on touch devices / small screens; mobile retains previous modal/side behavior */
+  @media (max-width: 800px), (hover: none) {
+    .hover-preview { display: none !important; }
+  }
+
   /* zoom controls */
   .zoom-controls {
     position: absolute;
@@ -249,7 +283,7 @@
 </head>
 <body>
 <div id="container">
-  <div id="map"><div id="tooltip"></div></div>
+  <div id="map"><div id="tooltip"></div><div id="hoverPreview" class="hover-preview" aria-hidden="true"></div></div>
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2>请选择一个国家</h2>
@@ -356,6 +390,7 @@ const svg = d3.select("#map").append("svg")
 // group for countries so zoom transforms this group
 const g = svg.append('g').attr('id', 'countries');
 const tooltip = d3.select("#tooltip");
+const hoverPreviewEl = document.getElementById('hoverPreview');
 const projection = d3.geoMercator()
   .scale((width / 2 / Math.PI) * 1.1)
   .translate([width / 2, height / 1.8]);
@@ -408,13 +443,16 @@ function renderMap() {
         .on("mouseover", (event, d) => {
           d3.select(event.currentTarget).raise();
           tooltip.style("display", "block").text(getLocalizedDisplay(d));
+          showHoverPreview(d, event);
         })
-        .on("mousemove", (event) => {
+        .on("mousemove", (event, d) => {
           tooltip.style("left", (event.pageX + 12) + "px")
                  .style("top", (event.pageY + 12) + "px");
+          updateHoverPreviewPosition(event);
         })
         .on("mouseout", () => {
           tooltip.style("display", "none");
+          hideHoverPreview();
         })
         .on("click", (event, d) => {
           g.selectAll(".country").classed("selected", false);
@@ -456,6 +494,93 @@ function attachZoomControls() {
   zoomReset.addEventListener('click', () => {
     svg.transition().duration(350).call(zoomBehavior.transform, d3.zoomIdentity);
   });
+}
+
+function findArtForFeature(d) {
+  const englishName = getCountryDisplayName(d);
+  const key = getCountryKey(d);
+  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), englishName, propNameToEnglish(englishName)];
+  for (const k of possibleKeys) {
+    if (!k) continue;
+    if (artworkData[k]) return artworkData[k];
+  }
+  if (artworkData[englishName]) return artworkData[englishName];
+  return null;
+}
+
+function getPreviewArt(d) {
+  const arts = findArtForFeature(d);
+  if (!arts || arts.length === 0) return null;
+  return arts[0]; // show first artwork as hover preview
+}
+
+function showHoverPreview(d, event) {
+  try {
+    // don't show on touch devices or if user prefers no hover
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
+
+    const art = getPreviewArt(d);
+    if (!art) return;
+
+    hoverPreviewEl.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = art.url;
+    img.alt = art.title || '';
+
+    const meta = document.createElement('div');
+    meta.className = 'hp-meta';
+    const title = document.createElement('div');
+    title.className = 'hp-title';
+    title.textContent = art.title || '';
+    const year = document.createElement('div');
+    year.className = 'hp-year';
+    year.textContent = art.year ? String(art.year) : '';
+    meta.appendChild(title);
+    meta.appendChild(year);
+
+    hoverPreviewEl.appendChild(img);
+    hoverPreviewEl.appendChild(meta);
+
+    // position and show
+    updateHoverPreviewPosition(event);
+    hoverPreviewEl.classList.add('visible');
+    hoverPreviewEl.setAttribute('aria-hidden', 'false');
+  } catch (e) {
+    console.error('hover preview error', e);
+  }
+}
+
+function updateHoverPreviewPosition(event) {
+  if (!hoverPreviewEl) return;
+  // if hidden do nothing
+  // compute position near cursor but within viewport
+  const padding = 12;
+  const boxW = hoverPreviewEl.offsetWidth || 260;
+  const boxH = hoverPreviewEl.offsetHeight || 100;
+  let x = (event.pageX || event.clientX + window.scrollX) + 18;
+  let y = (event.pageY || event.clientY + window.scrollY) + 18;
+
+  const winW = window.innerWidth;
+  const winH = window.innerHeight;
+
+  // flip horizontally if it would overflow
+  if (x + boxW + padding > winW) {
+    x = (event.pageX || event.clientX + window.scrollX) - boxW - 18;
+  }
+  // shift up if bottom overflow
+  if (y + boxH + padding > (window.scrollY + winH)) {
+    y = (event.pageY || event.clientY + window.scrollY) - boxH - 18;
+  }
+
+  hoverPreviewEl.style.left = x + 'px';
+  hoverPreviewEl.style.top = y + 'px';
+}
+
+function hideHoverPreview() {
+  if (!hoverPreviewEl) return;
+  hoverPreviewEl.classList.remove('visible');
+  hoverPreviewEl.setAttribute('aria-hidden', 'true');
+  // keep content to avoid reflow; will be replaced on next hover
 }
 
 function showArtworksForCountry(d) {
