@@ -245,6 +245,22 @@ const numericCountryToIso2 = {
   '756': 'CH'
 };
 
+// 英文名 -> 中文名 对照，用于在侧栏与 tooltip 显示中文（例如：德国 -> 德国 (Germany)）
+const englishToChinese = {
+  'China': '中国',
+  'Japan': '日本',
+  'United States': '美国',
+  'France': '法国',
+  'Germany': '德国',
+  'United Kingdom': '英国',
+  'South Korea': '韩国',
+  'Italy': '意大利',
+  'Spain': '西班牙',
+  'Russia': '俄罗斯',
+  'Canada': '加拿大',
+  'Australia': '澳大利亚'
+};
+
 const artworkData = {
   "CN": [
     { title: "中国的记忆", url: "China.png", year: 2026, desc: "0000" }
@@ -264,12 +280,13 @@ const artworkData = {
   ]
 };
 
-
 const width = Math.max(700, window.innerWidth * 0.6);
 const height = Math.max(400, window.innerHeight);
 const svg = d3.select("#map").append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet");
+// g: all country paths go into this group so zoom transforms it
+const g = svg.append('g').attr('id', 'countries');
 const tooltip = d3.select("#tooltip");
 const projection = d3.geoMercator()
   .scale((width / 2 / Math.PI) * 1.1)
@@ -297,6 +314,12 @@ function getCountryDisplayName(d) {
   return props.name || props.NAME || props.ADMIN || getCountryKey(d) || '';
 }
 
+function getLocalizedDisplay(d) {
+  const en = getCountryDisplayName(d);
+  const zh = englishToChinese[en] || englishToChinese[getCountryKey(d)] || null;
+  return zh ? `${zh} (${en})` : en;
+}
+
 function propNameToEnglish(name) {
   const map = { '中国': 'China', '日本': 'Japan', '美国': 'United States' };
   return map[name] || name;
@@ -306,15 +329,14 @@ function renderMap() {
   d3.json(geojsonUrl).then(world => {
     const countries = topojson.feature(world, world.objects.countries);
 
-    svg.append("g")
-      .selectAll("path")
+    g.selectAll("path")
       .data(countries.features)
       .join("path")
         .attr("class", "country")
         .attr("d", path)
         .on("mouseover", (event, d) => {
           d3.select(event.currentTarget).raise();
-          tooltip.style("display", "block").text(getCountryDisplayName(d));
+          tooltip.style("display", "block").text(getLocalizedDisplay(d));
         })
         .on("mousemove", (event) => {
           tooltip.style("left", (event.pageX + 12) + "px")
@@ -324,10 +346,22 @@ function renderMap() {
           tooltip.style("display", "none");
         })
         .on("click", (event, d) => {
-          svg.selectAll(".country").classed("selected", false);
+          g.selectAll(".country").classed("selected", false);
           d3.select(event.currentTarget).classed("selected", true);
           showArtworksForCountry(d);
         });
+
+    // enable zoom/pan on the svg, transforming the countries group
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        // keep stroke width visually stable
+        g.selectAll('.country').style('stroke-width', (0.5 / event.transform.k));
+      });
+
+    svg.call(zoom);
+
   }).catch(err => {
     document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 TopoJSON 连接。</p>';
     console.error(err);
@@ -335,9 +369,10 @@ function renderMap() {
 }
 
 function showArtworksForCountry(d) {
+  const englishName = getCountryDisplayName(d); // 用于哈希与匹配
+  const localized = getLocalizedDisplay(d); // 用于侧栏显示
   const key = getCountryKey(d);
-  const name = getCountryDisplayName(d);
-  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), name, propNameToEnglish(name)];
+  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), englishName, propNameToEnglish(englishName)];
   let arts = null;
 
   for (const k of possibleKeys) {
@@ -348,7 +383,7 @@ function showArtworksForCountry(d) {
     }
   }
 
-  if (!arts && artworkData[name]) arts = artworkData[name];
+  if (!arts && artworkData[englishName]) arts = artworkData[englishName];
 
   const container = document.getElementById('countryInfo');
   container.innerHTML = '';
@@ -358,7 +393,7 @@ function showArtworksForCountry(d) {
 
   const title = document.createElement('h3');
   title.className = 'country-title';
-  title.textContent = name;
+  title.textContent = localized;
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn-close';
@@ -396,7 +431,8 @@ function showArtworksForCountry(d) {
     const titleLink = document.createElement('span');
     titleLink.className = 'wiki-link';
     titleLink.textContent = art.title || 'Untitled';
-    titleLink.onclick = () => showSubpage(name, idx, arts);
+    // pass englishName into showSubpage so hash uses english name for better matching
+    titleLink.onclick = () => showSubpage(englishName, idx, arts);
 
     const year = document.createElement('div');
     year.className = 'art-year';
@@ -417,7 +453,7 @@ function showArtworksForCountry(d) {
   container.appendChild(list);
 }
 
-function showSubpage(countryName, artIndex, arts) {
+function showSubpage(countryEnglishName, artIndex, arts) {
   const container = document.getElementById('countryInfo');
   const art = arts[artIndex];
   if (!art) return;
@@ -429,14 +465,14 @@ function showSubpage(countryName, artIndex, arts) {
 
   const title = document.createElement('h3');
   title.className = 'country-title';
-  title.textContent = art.title || countryName;
+  title.textContent = art.title || countryEnglishName;
 
   const back = document.createElement('button');
   back.className = 'mini-link';
   back.textContent = '← 返回列表';
   back.onclick = () => {
     const features = svg.selectAll('path').data();
-    const feature = features.find(f => getCountryDisplayName(f) === countryName);
+    const feature = features.find(f => getCountryDisplayName(f) === countryEnglishName);
     if (feature) showArtworksForCountry(feature);
     else {
       document.getElementById('countryInfo').innerHTML = '<p class="no-art">无法找到该国家的地图数据。</p>';
@@ -472,7 +508,7 @@ function showSubpage(countryName, artIndex, arts) {
   detail.appendChild(desc);
   container.appendChild(detail);
 
-  history.pushState(null, '', `#art/${encodeURIComponent(countryName)}/${artIndex}`);
+  history.pushState(null, '', `#art/${encodeURIComponent(countryEnglishName)}/${artIndex}`);
 }
 
 function openModal(art) {
@@ -500,7 +536,7 @@ function closeModal() {
 }
 
 function clearSelection() {
-  svg.selectAll('.country').classed('selected', false);
+  g.selectAll('.country').classed('selected', false);
   document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
   history.pushState(null, '', '#');
 }
@@ -528,7 +564,7 @@ function handleHashOnLoad() {
     });
 
     if (feature) {
-      svg.selectAll('.country').classed('selected', false);
+      g.selectAll('.country').classed('selected', false);
       svg.selectAll('path')
         .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
         .classed('selected', true);
