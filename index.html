@@ -42,7 +42,9 @@
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
+  /* sidebar is hidden by default until a country is selected */
   #sidebar {
+    display: none;
     width: 380px;
     max-width: 42vw;
     background: var(--panel);
@@ -442,6 +444,9 @@ function attachZoomControls() {
 }
 
 function showArtworksForCountry(d) {
+  // ensure sidebar is visible when showing artworks
+  document.getElementById('sidebar').style.display = '';
+
   const englishName = getCountryDisplayName(d); // 用于哈希与匹配
   const localized = getLocalizedDisplay(d); // 用于侧栏显示
   const key = getCountryKey(d);
@@ -527,6 +532,9 @@ function showArtworksForCountry(d) {
 }
 
 function showSubpage(countryEnglishName, artIndex, arts) {
+  // make sure sidebar is visible when opening a subpage
+  document.getElementById('sidebar').style.display = '';
+
   const container = document.getElementById('countryInfo');
   const art = arts[artIndex];
   if (!art) return;
@@ -626,6 +634,8 @@ function closeModal() {
 function clearSelection() {
   g.selectAll('.country').classed('selected', false);
   document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
+  // hide sidebar again when cleared
+  document.getElementById('sidebar').style.display = 'none';
   history.pushState(null, '', '#');
 }
 
@@ -656,6 +666,9 @@ function handleHashOnLoad() {
       svg.selectAll('path')
         .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
         .classed('selected', true);
+
+      // show sidebar before rendering
+      document.getElementById('sidebar').style.display = '';
 
       const arts = artworkData[getCountryKey(feature)] || artworkData[getCountryDisplayName(feature)] || artworkData[feature.properties?.name];
       if (arts && arts[artIndex]) {
