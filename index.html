@@ -42,29 +42,25 @@
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
-  /* sidebar starts hidden so the full world map remains visible */
+  /* completely hidden until a country is selected */
   #sidebar {
-    width: 0;
-    max-width: 0;
-    flex-shrink: 0;
-    background: var(--panel);
-    border-left: none;
-    box-shadow: none;
-    padding: 0;
-    overflow: hidden;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(8px);
-    transition: width 220ms ease, max-width 220ms ease, opacity 220ms ease, transform 220ms ease, visibility 220ms, padding 220ms ease, border-left 220ms ease;
-    pointer-events: none;
-  }
-  #sidebar.visible {
+    display: none;
     width: 380px;
     max-width: 42vw;
+    flex-shrink: 0;
     background: var(--panel);
     border-left: 1px solid var(--line);
     box-shadow: -4px 0 12px rgba(0,0,0,0.04);
     padding: 16px;
+    overflow: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(8px);
+    transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
+    pointer-events: none;
+  }
+  #sidebar.visible {
+    display: block;
     opacity: 1;
     visibility: visible;
     transform: translateX(0);
@@ -156,7 +152,6 @@
     margin: 0;
   }
 
-  /* hover preview card for desktop */
   .hover-preview {
     position: absolute;
     pointer-events: none;
@@ -185,12 +180,10 @@
   .hover-preview .hp-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
   .hover-preview .hp-year { color: var(--muted); font-size: 0.85rem; }
 
-  /* hide hover preview on touch devices / small screens; mobile retains previous modal/side behavior */
   @media (max-width: 800px), (hover: none) {
     .hover-preview { display: none !important; }
   }
 
-  /* zoom controls */
   .zoom-controls {
     position: absolute;
     right: 12px;
@@ -258,12 +251,14 @@
   @media (max-width: 800px) {
     #container { flex-direction:column; }
     #sidebar {
-      width: 0;
-      max-width: 0;
+      display: none;
+      width: 100%;
+      max-width: 100%;
       border-left:none;
       border-top:none;
     }
     #sidebar.visible {
+      display: block;
       width: 100%;
       max-width: 100%;
       max-height: 45vh;
@@ -271,11 +266,9 @@
       border-top:1px solid var(--line);
       padding: 16px;
     }
-    /* mobile: larger tappable areas */
     .thumb { width: 120px; height: 90px; }
     .wiki-link { font-size: 1rem; }
     .zoom-btn { width: 52px; height: 52px; border-radius: 12px; }
-    /* mobile modal full-screen */
     #modal .modal-inner {
       width: 100%;
       height: 100%;
@@ -400,7 +393,6 @@ const height = Math.max(400, window.innerHeight);
 const svg = d3.select("#map").append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet");
-// group for countries so zoom transforms this group
 const g = svg.append('g').attr('id', 'countries');
 const tooltip = d3.select("#tooltip");
 const hoverPreviewEl = document.getElementById('hoverPreview');
@@ -409,7 +401,7 @@ const projection = d3.geoMercator()
   .translate([width / 2, height / 1.8]);
 const path = d3.geoPath().projection(projection);
 
-let zoomBehavior; // store zoom so controls can call it
+let zoomBehavior;
 const sidebarEl = document.getElementById('sidebar');
 
 function getNumericIso2(d) {
@@ -473,18 +465,14 @@ function renderMap() {
           showArtworksForCountry(d);
         });
 
-    // enable zoom/pan on the svg, transforming the countries group
     zoomBehavior = d3.zoom()
       .scaleExtent([1, 8])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
-        // keep stroke width visually stable
         g.selectAll('.country').style('stroke-width', (0.5 / event.transform.k));
       });
 
     svg.call(zoomBehavior);
-
-    // attach zoom control buttons
     attachZoomControls();
 
   }).catch(err => {
@@ -524,12 +512,11 @@ function findArtForFeature(d) {
 function getPreviewArt(d) {
   const arts = findArtForFeature(d);
   if (!arts || arts.length === 0) return null;
-  return arts[0]; // show first artwork as hover preview
+  return arts[0];
 }
 
 function showHoverPreview(d, event) {
   try {
-    // don't show on touch devices or if user prefers no hover
     if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
 
     const art = getPreviewArt(d);
@@ -554,7 +541,6 @@ function showHoverPreview(d, event) {
     hoverPreviewEl.appendChild(img);
     hoverPreviewEl.appendChild(meta);
 
-    // position and show
     updateHoverPreviewPosition(event);
     hoverPreviewEl.classList.add('visible');
     hoverPreviewEl.setAttribute('aria-hidden', 'false');
@@ -565,8 +551,6 @@ function showHoverPreview(d, event) {
 
 function updateHoverPreviewPosition(event) {
   if (!hoverPreviewEl) return;
-  // if hidden do nothing
-  // compute position near cursor but within viewport
   const padding = 12;
   const boxW = hoverPreviewEl.offsetWidth || 260;
   const boxH = hoverPreviewEl.offsetHeight || 100;
@@ -576,11 +560,9 @@ function updateHoverPreviewPosition(event) {
   const winW = window.innerWidth;
   const winH = window.innerHeight;
 
-  // flip horizontally if it would overflow
   if (x + boxW + padding > winW) {
     x = (event.pageX || event.clientX + window.scrollX) - boxW - 18;
   }
-  // shift up if bottom overflow
   if (y + boxH + padding > (window.scrollY + winH)) {
     y = (event.pageY || event.clientY + window.scrollY) - boxH - 18;
   }
@@ -593,15 +575,13 @@ function hideHoverPreview() {
   if (!hoverPreviewEl) return;
   hoverPreviewEl.classList.remove('visible');
   hoverPreviewEl.setAttribute('aria-hidden', 'true');
-  // keep content to avoid reflow; will be replaced on next hover
 }
 
 function showArtworksForCountry(d) {
-  // add visible class to animate sidebar in
   sidebarEl.classList.add('visible');
 
-  const englishName = getCountryDisplayName(d); // 用于哈希与匹配
-  const localized = getLocalizedDisplay(d); // 用于侧栏显示
+  const englishName = getCountryDisplayName(d);
+  const localized = getLocalizedDisplay(d);
   const key = getCountryKey(d);
   const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), englishName, propNameToEnglish(englishName)];
   let arts = null;
@@ -662,7 +642,6 @@ function showArtworksForCountry(d) {
     const titleLink = document.createElement('span');
     titleLink.className = 'wiki-link';
     titleLink.textContent = art.title || 'Untitled';
-    // pass englishName into showSubpage so hash uses english name for better matching
     titleLink.onclick = () => showSubpage(englishName, idx, arts);
 
     const year = document.createElement('div');
@@ -685,7 +664,6 @@ function showArtworksForCountry(d) {
 }
 
 function showSubpage(countryEnglishName, artIndex, arts) {
-  // add visible class to animate sidebar in
   sidebarEl.classList.add('visible');
 
   const container = document.getElementById('countryInfo');
@@ -765,7 +743,6 @@ function openModal(art) {
   document.getElementById('modal').style.display = 'flex';
 }
 
-// mobile: allow swipe down to close modal (basic)
 let modalTouchStartY = null;
 document.getElementById('modal').addEventListener('touchstart', (e) => {
   if (e.touches && e.touches[0]) modalTouchStartY = e.touches[0].clientY;
@@ -774,7 +751,7 @@ document.getElementById('modal').addEventListener('touchmove', (e) => {
   if (!modalTouchStartY) return;
   const y = e.touches[0].clientY;
   const diff = y - modalTouchStartY;
-  if (diff > 120) { // swipe down threshold
+  if (diff > 120) {
     closeModal();
     modalTouchStartY = null;
   }
@@ -787,7 +764,6 @@ function closeModal() {
 function clearSelection() {
   g.selectAll('.country').classed('selected', false);
   document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
-  // remove visible class to animate sidebar out
   sidebarEl.classList.remove('visible');
   history.pushState(null, '', '#');
 }
@@ -820,7 +796,6 @@ function handleHashOnLoad() {
         .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
         .classed('selected', true);
 
-      // animate sidebar in
       sidebarEl.classList.add('visible');
 
       const arts = artworkData[getCountryKey(feature)] || artworkData[getCountryDisplayName(feature)] || artworkData[feature.properties?.name];
@@ -841,13 +816,12 @@ document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') closeModal();
 });
 
-// prevent page scrolling while interacting with map on touch devices
-// (touch-action:none on svg helps but this prevents accidental page scroll when touching map container)
 let isTouchingMap = false;
 const mapEl = document.getElementById('map');
 mapEl.addEventListener('touchstart', () => { isTouchingMap = true; }, { passive: true });
 mapEl.addEventListener('touchend', () => { isTouchingMap = false; }, { passive: true });
 
+sidebarEl.classList.remove('visible');
 renderMap();
 handleHashOnLoad();
 </script>
