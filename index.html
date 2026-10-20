@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -18,6 +18,10 @@
     --map-selected: #4a90e2;
     --zoom-btn-bg: rgba(255,255,255,0.9);
     --zoom-btn-shadow: 0 6px 18px rgba(12,18,31,0.08);
+    --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.12);
+    --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.08);
+    --radius-lg: 24px;
+    --radius-md: 16px;
   }
 
   * { box-sizing: border-box; }
@@ -29,7 +33,12 @@
   }
 
   #container { display:flex; height:100vh; width:100%; }
-  #map { flex: 1; min-width: 0; position: relative; background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%); }
+  #map {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
+  }
   svg { width:100%; height:100%; display:block; touch-action: none; }
 
   .country {
@@ -44,20 +53,25 @@
 
   #sidebar {
     display: none;
-    width: 380px;
-    max-width: 42vw;
+    position: relative;
+    width: 360px;
+    max-width: 40vw;
     flex-shrink: 0;
-    background: var(--panel);
-    border-left: 1px solid var(--line);
-    box-shadow: -4px 0 12px rgba(0,0,0,0.04);
-    padding: 16px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(10px);
+    border-left: 1px solid rgba(148,163,184,0.18);
+    box-shadow: -12px 0 32px rgba(15, 23, 42, 0.12);
+    padding: 18px 18px 20px 18px;
     overflow: auto;
     opacity: 0;
     visibility: hidden;
-    transform: translateX(10px) scale(0.98);
+    transform: translateX(120%) scale(0.96);
     transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
     pointer-events: none;
+    border-radius: 24px 0 0 24px;
+    margin-left: 8px;
   }
+
   #sidebar.visible {
     display: block;
     opacity: 1;
@@ -69,11 +83,11 @@
   @keyframes sidebarBounce {
     0% {
       opacity: 0;
-      transform: translateX(14px) scale(0.96);
+      transform: translateX(18px) scale(0.96);
     }
-    50% {
+    52% {
       opacity: 1;
-      transform: translateX(-4px) scale(1.02);
+      transform: translateX(-6px) scale(1.01);
     }
     100% {
       opacity: 1;
@@ -90,40 +104,78 @@
     justify-content:space-between;
     align-items:center;
     gap:8px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eef2f7;
   }
-  #sidebar h2 { margin:0; font-size: 1.05rem; }
+  #sidebar h2 {
+    margin:0;
+    font-size: 1.08rem;
+    letter-spacing: 0.02em;
+  }
 
   .btn-close, .mini-link {
     background: #eef2f7;
     border: 1px solid #dbe3ec;
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: 10px;
+    padding: 7px 11px;
     color: var(--text);
     cursor: pointer;
     font: inherit;
+    transition: background 0.15s ease, transform 0.15s ease;
   }
-  .btn-close:hover, .mini-link:hover { background: #e4ebf5; }
+  .btn-close:hover, .mini-link:hover {
+    background: #e4ebf5;
+    transform: translateY(-1px);
+  }
+
+  .country-panel {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+  }
 
   .no-art {
     color: var(--muted);
-    padding: 10px 0;
+    padding: 12px 0;
     margin: 0;
+    line-height: 1.6;
   }
 
-  .country-title { font-size: 1.1rem; margin: 0 0 8px; }
-  .art-list { display:flex; flex-direction:column; gap:12px; }
+  .country-title {
+    font-size: 1.08rem;
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+
+  .art-list {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
   .art-item {
     display:flex;
     gap:12px;
-    padding: 8px 0;
-    border-bottom: 1px solid #eef2f7;
+    padding: 10px 8px;
+    border-radius: 14px;
+    border: 1px solid #eef2f7;
+    background: rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.02);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
+  .art-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15,23,42,0.06);
+  }
+
   .thumb {
     width: 96px;
     height: 72px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     border: 1px solid #e5e7eb;
     flex-shrink: 0;
@@ -131,24 +183,31 @@
   }
   .art-meta { flex: 1; min-width: 0; }
   .wiki-link {
+    display:inline-block;
     color: var(--link);
-    text-decoration: underline;
+    text-decoration: none;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
+    margin-bottom: 6px;
   }
   .wiki-link:hover { color: var(--link-hover); }
   .art-year {
     color: var(--muted);
     font-size: 0.8rem;
-    margin-top: 4px;
+    margin-top: 2px;
   }
   .art-desc {
     color: var(--text);
     font-size: 0.9rem;
     line-height: 1.5;
-    margin-top: 6px;
+    margin-top: 7px;
   }
-  .detail-container { display:flex; flex-direction:column; gap:10px; }
+
+  .detail-container {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
   .detail-header {
     display:flex;
     justify-content:space-between;
@@ -160,9 +219,10 @@
     width: 100%;
     max-height: 420px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 14px;
     background: #f8f9fb;
     border: 1px solid #edf1f5;
+    box-shadow: var(--shadow-card);
   }
   .detail-text {
     line-height: 1.7;
@@ -176,7 +236,7 @@
     background: linear-gradient(180deg, #ffffff, #f8fbff);
     border: 1px solid rgba(14, 41, 77, 0.08);
     box-shadow: 0 8px 24px rgba(12,18,31,0.12);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     width: 260px;
     max-width: 38vw;
@@ -193,7 +253,7 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-  .hover-preview img { width: 120px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #eef2f7; }
+  .hover-preview img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eef2f7; }
   .hover-preview .hp-meta { display:flex; flex-direction:column; gap:6px; }
   .hover-preview .hp-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
   .hover-preview .hp-year { color: var(--muted); font-size: 0.85rem; }
@@ -214,7 +274,7 @@
   .zoom-btn {
     width: 44px;
     height: 44px;
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--zoom-btn-bg);
     box-shadow: var(--zoom-btn-shadow);
     border: 1px solid #e6eef8;
@@ -233,7 +293,7 @@
     background: rgba(0,0,0,0.75);
     color: #fff;
     padding: 6px 8px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     display:none;
     z-index: 10;
@@ -245,24 +305,24 @@
     display:none;
     align-items:center;
     justify-content:center;
-    background: rgba(0,0,0,0.6);
+    background: rgba(15, 23, 42, 0.52);
     z-index:30;
     padding: 24px;
   }
   #modal .modal-inner {
     background:#fff;
     padding: 18px;
-    border-radius: 12px;
+    border-radius: 18px;
     max-width: 90vw;
     max-height: 90vh;
     overflow:auto;
-    box-shadow: 0 18px 42px rgba(0,0,0,0.2);
+    box-shadow: 0 22px 48px rgba(15,23,42,0.24);
   }
   #modal img {
     max-width:100%;
     height:auto;
     display:block;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e5e7eb;
   }
 
@@ -272,18 +332,20 @@
       display: none;
       width: 100%;
       max-width: 100%;
+      margin-left: 0;
       border-left:none;
-      border-top:none;
+      border-top:1px solid rgba(148,163,184,0.18);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -12px 28px rgba(15,23,42,0.08);
     }
     #sidebar.visible {
       display: block;
       width: 100%;
       max-width: 100%;
-      max-height: 45vh;
-      border-left:none;
-      border-top:1px solid var(--line);
+      max-height: 48vh;
       padding: 16px;
     }
+    .art-item { padding: 9px; }
     .thumb { width: 120px; height: 90px; }
     .wiki-link { font-size: 1rem; }
     .zoom-btn { width: 52px; height: 52px; border-radius: 12px; }
@@ -311,7 +373,7 @@
       <h2>請選擇一個國家</h2>
       <button id="clearBtn" class="btn-close">清除</button>
     </div>
-    <div id="countryInfo">
+    <div id="countryInfo" class="country-panel">
       <p class="no-art">點選地圖上的國家以查看對應畫作。</p>
     </div>
   </aside>
