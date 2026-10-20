@@ -42,25 +42,29 @@
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
-  /* sidebar is visually hidden by default; animates in when .visible is added */
+  /* sidebar starts hidden so the full world map remains visible */
   #sidebar {
-    /* keep in layout but hidden visually for smoother animation */
+    width: 0;
+    max-width: 0;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-left: none;
+    box-shadow: none;
+    padding: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(8px);
+    transition: width 220ms ease, max-width 220ms ease, opacity 220ms ease, transform 220ms ease, visibility 220ms, padding 220ms ease, border-left 220ms ease;
+    pointer-events: none;
+  }
+  #sidebar.visible {
     width: 380px;
     max-width: 42vw;
     background: var(--panel);
     border-left: 1px solid var(--line);
     box-shadow: -4px 0 12px rgba(0,0,0,0.04);
     padding: 16px;
-    overflow: auto;
-
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(8px);
-    transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
-    pointer-events: none; /* prevent interaction when hidden */
-  }
-  /* visible state: fade/slide in */
-  #sidebar.visible {
     opacity: 1;
     visibility: visible;
     transform: translateX(0);
@@ -155,7 +159,7 @@
   /* hover preview card for desktop */
   .hover-preview {
     position: absolute;
-    pointer-events: none; /* let mouse events pass through */
+    pointer-events: none;
     background: linear-gradient(180deg, #ffffff, #f8fbff);
     border: 1px solid rgba(14, 41, 77, 0.08);
     box-shadow: 0 8px 24px rgba(12,18,31,0.12);
@@ -254,11 +258,18 @@
   @media (max-width: 800px) {
     #container { flex-direction:column; }
     #sidebar {
-      width:100%;
-      max-width:100%;
-      max-height:45vh;
+      width: 0;
+      max-width: 0;
+      border-left:none;
+      border-top:none;
+    }
+    #sidebar.visible {
+      width: 100%;
+      max-width: 100%;
+      max-height: 45vh;
       border-left:none;
       border-top:1px solid var(--line);
+      padding: 16px;
     }
     /* mobile: larger tappable areas */
     .thumb { width: 120px; height: 90px; }
