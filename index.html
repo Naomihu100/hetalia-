@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>按国家展示画作 — Hetalia</title>
+<title>按國家展示畫作 — Hetalia</title>
 <style>
   :root {
     --bg: #f5f7fa;
@@ -23,7 +23,7 @@
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; }
   body {
-    font-family: system-ui, -apple-family, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
   }
@@ -308,24 +308,24 @@
   <div id="map"><div id="tooltip"></div><div id="hoverPreview" class="hover-preview" aria-hidden="true"></div></div>
   <aside id="sidebar">
     <div class="sidebar-header">
-      <h2>请选择一个国家</h2>
+      <h2>請選擇一個國家</h2>
       <button id="clearBtn" class="btn-close">清除</button>
     </div>
     <div id="countryInfo">
-      <p class="no-art">点选地图上的国家以查看对应画作。</p>
+      <p class="no-art">點選地圖上的國家以查看對應畫作。</p>
     </div>
   </aside>
 </div>
 
 <div class="zoom-controls" aria-hidden="false">
   <button id="zoomIn" class="zoom-btn" aria-label="放大">+</button>
-  <button id="zoomOut" class="zoom-btn" aria-label="缩小">−</button>
+  <button id="zoomOut" class="zoom-btn" aria-label="縮小">−</button>
   <button id="zoomReset" class="zoom-btn" aria-label="重置">◯</button>
 </div>
 
 <div id="modal" aria-hidden="true">
   <div class="modal-inner">
-    <button id="closeModal" class="btn-close" style="float:right">关闭</button>
+    <button id="closeModal" class="btn-close" style="float:right">關閉</button>
     <div id="modalContent"></div>
   </div>
 </div>
@@ -371,38 +371,38 @@ const numericCountryToIso2 = {
 };
 
 const englishToChinese = {
-  'China': '中国',
+  'China': '中國',
   'Japan': '日本',
-  'United States': '美国',
-  'France': '法国',
-  'Germany': '德国',
-  'United Kingdom': '英国',
-  'South Korea': '韩国',
-  'Italy': '意大利',
+  'United States': '美國',
+  'France': '法國',
+  'Germany': '德國',
+  'United Kingdom': '英國',
+  'South Korea': '韓國',
+  'Italy': '義大利',
   'Spain': '西班牙',
-  'Russia': '俄罗斯',
+  'Russia': '俄羅斯',
   'Canada': '加拿大',
-  'Australia': '澳大利亚'
+  'Australia': '澳大利亞'
 };
 
 const artworkData = {
   "CN": [
-    { title: "中国的记忆", url: "China.png", year: 2026, desc: "0000" }
+    { title: "中國的記憶", url: "China.png", year: 2026, desc: "0000" }
   ],
   "DE": [
-    { title: "德国的记忆", url: "Germany.png", year: 2026, desc: "0000" }
+    { title: "德國的記憶", url: "Germany.png", year: 2026, desc: "0000" }
   ],
   "FR": [
-    { title: "法国的记忆", url: "france.png", year: 2026, desc: "0000" }
+    { title: "法國的記憶", url: "france.png", year: 2026, desc: "0000" }
   ],
   "JP": [
     { title: "日本的記憶", url: "Japan.png", year: 2024, desc: "0000" }
   ],
   "CA": [
-    { title: "加拿大的记忆", url: "canda1.png", year: 2026, desc: "0000" }
+    { title: "加拿大的記憶", url: "canda1.png", year: 2026, desc: "0000" }
   ],
   "US": [
-    { title: "大地之色", url: "american.png", year: 2021, desc: "0000" }
+    { title: "美國的記憶", url: "american.png", year: 2021, desc: "0000" }
   ]
 };
 
@@ -467,7 +467,7 @@ function getLocalizedDisplay(d) {
 }
 
 function propNameToEnglish(name) {
-  const map = { '中国': 'China', '日本': 'Japan', '美国': 'United States' };
+  const map = { '中國': 'China', '日本': 'Japan', '美國': 'United States' };
   return map[name] || name;
 }
 
@@ -511,7 +511,7 @@ function renderMap() {
     attachZoomControls();
 
   }).catch(err => {
-    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 TopoJSON 连接。</p>';
+    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地圖載入失敗，請檢查網路或 TopoJSON 連線。</p>';
     console.error(err);
   });
 }
@@ -643,7 +643,7 @@ function showArtworksForCountry(d) {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn-close';
-  backBtn.textContent = '回到地图';
+  backBtn.textContent = '回到地圖';
   backBtn.onclick = () => clearSelection();
 
   header.appendChild(title);
@@ -653,7 +653,7 @@ function showArtworksForCountry(d) {
   if (!arts || arts.length === 0) {
     const p = document.createElement('p');
     p.className = 'no-art';
-    p.textContent = '该国家暂无画作，您可以在 artworkData 中加入对应作品。';
+    p.textContent = '該國家暫無畫作，您可以在 artworkData 中加入對應作品。';
     container.appendChild(p);
     return;
   }
@@ -722,7 +722,7 @@ function showSubpage(countryEnglishName, artIndex, arts) {
     const feature = features.find(f => getCountryDisplayName(f) === countryEnglishName);
     if (feature) showArtworksForCountry(feature);
     else {
-      document.getElementById('countryInfo').innerHTML = '<p class="no-art">无法找到该国家的地图数据。</p>';
+      document.getElementById('countryInfo').innerHTML = '<p class="no-art">無法找到該國家的地圖資料。</p>';
     }
     history.pushState(null, '', '#');
   };
@@ -798,7 +798,7 @@ function closeModal() {
 
 function clearSelection() {
   g.selectAll('.country').classed('selected', false);
-  document.getElementById('countryInfo').innerHTML = '<p class="no-art">点选地图上的国家以查看对应画作。</p>';
+  document.getElementById('countryInfo').innerHTML = '<p class="no-art">點選地圖上的國家以查看對應畫作。</p>';
   hideSidebar();
   history.pushState(null, '', '#');
 }
