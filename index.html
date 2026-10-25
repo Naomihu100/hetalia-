@@ -13,15 +13,13 @@
     --muted: #6b7280;
     --link: #0645ad;
     --link-hover: #0a3d91;
-    --map-fill: #dcdcdc;
+    --map-fill: #e5e7eb;
     --map-hover: #b3d4ff;
     --map-selected: #4a90e2;
     --zoom-btn-bg: rgba(255,255,255,0.9);
     --zoom-btn-shadow: 0 6px 18px rgba(12,18,31,0.08);
     --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.12);
     --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.08);
-    --radius-lg: 24px;
-    --radius-md: 16px;
   }
 
   * { box-sizing: border-box; }
@@ -37,25 +35,32 @@
     flex: 1;
     min-width: 0;
     position: relative;
-    background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
+    background: linear-gradient(180deg, #f0f6ff 0%, #e5f0ff 100%);
   }
   svg { width:100%; height:100%; display:block; touch-action: none; }
 
   .country {
     fill: var(--map-fill);
-    stroke: #fff;
+    stroke: #ffffff;
     stroke-width: 0.5;
     cursor: pointer;
-    transition: fill 0.15s ease;
+    transition: fill 0.15s ease, opacity 0.3s ease;
   }
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
-  .historical-layer {
-    pointer-events: none;
-    stroke: rgba(255,255,255,0.9);
-    stroke-width: 1;
-    transition: opacity 180ms ease;
+  /* 歷史圖層樣式：精確路徑 hover 與點擊 */
+  .historical-layer path {
+    cursor: pointer;
+    stroke-width: 1.2;
+    stroke: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    filter: drop-shadow(0px 3px 8px rgba(0,0,0,0.25));
+    pointer-events: all;
+  }
+  .historical-layer path:hover {
+    filter: drop-shadow(0px 5px 14px rgba(0,0,0,0.4));
+    opacity: 0.95;
   }
 
   .layer-controls {
@@ -66,41 +71,44 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    max-width: min(460px, calc(100% - 110px));
+    max-width: min(520px, calc(100% - 110px));
   }
   .layer-btn {
     appearance: none;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255,255,255,0.92);
     color: var(--text);
-    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    box-shadow: 0 4px 12px rgba(15,23,42,0.06);
     border-radius: 999px;
-    padding: 7px 12px;
-    font-size: 0.82rem;
+    padding: 7px 14px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
   }
   .layer-btn:hover {
     transform: translateY(-1px);
+    background: #ffffff;
   }
   .layer-btn.active {
-    background: #111827;
-    color: #fff;
-    border-color: #111827;
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #1e293b;
+    box-shadow: 0 4px 14px rgba(30, 41, 59, 0.25);
   }
 
+  /* 側邊欄樣式與彈跳動畫 */
   #sidebar {
     display: none;
     position: relative;
     width: 360px;
     max-width: 40vw;
     flex-shrink: 0;
-    background: rgba(255,255,255,0.94);
+    background: rgba(255,255,255,0.95);
     backdrop-filter: blur(10px);
     border-left: 1px solid rgba(148,163,184,0.18);
     box-shadow: -12px 0 32px rgba(15, 23, 42, 0.12);
-    padding: 18px 18px 20px 18px;
+    padding: 18px;
     overflow: auto;
     opacity: 0;
     visibility: hidden;
@@ -108,7 +116,6 @@
     transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
     pointer-events: none;
     border-radius: 24px 0 0 24px;
-    margin-left: 8px;
   }
 
   #sidebar.visible {
@@ -120,18 +127,9 @@
   }
 
   @keyframes sidebarBounce {
-    0% {
-      opacity: 0;
-      transform: translateX(18px) scale(0.96);
-    }
-    52% {
-      opacity: 1;
-      transform: translateX(-6px) scale(1.01);
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-    }
+    0% { opacity: 0; transform: translateX(18px) scale(0.96); }
+    52% { opacity: 1; transform: translateX(-6px) scale(1.01); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
   }
 
   #sidebar.panel-bounce {
@@ -147,13 +145,9 @@
     padding-bottom: 10px;
     border-bottom: 1px solid #eef2f7;
   }
-  #sidebar h2 {
-    margin:0;
-    font-size: 1.08rem;
-    letter-spacing: 0.02em;
-  }
+  #sidebar h2 { margin:0; font-size: 1.08rem; letter-spacing: 0.02em; }
 
-  .btn-close, .mini-link {
+  .btn-close {
     background: #eef2f7;
     border: 1px solid #dbe3ec;
     border-radius: 10px;
@@ -163,10 +157,7 @@
     font: inherit;
     transition: background 0.15s ease, transform 0.15s ease;
   }
-  .btn-close:hover, .mini-link:hover {
-    background: #e4ebf5;
-    transform: translateY(-1px);
-  }
+  .btn-close:hover { background: #e4ebf5; transform: translateY(-1px); }
 
   .country-panel {
     background: #f8fafc;
@@ -176,24 +167,9 @@
     box-shadow: var(--shadow-card);
   }
 
-  .no-art {
-    color: var(--muted);
-    padding: 12px 0;
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  .country-title {
-    font-size: 1.08rem;
-    margin: 0 0 10px;
-    line-height: 1.4;
-  }
-
-  .art-list {
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
+  .no-art { color: var(--muted); padding: 12px 0; margin: 0; line-height: 1.6; }
+  .country-title { font-size: 1.08rem; margin: 0 0 10px; line-height: 1.4; }
+  .art-list { display:flex; flex-direction:column; gap:12px; }
 
   .art-item {
     display:flex;
@@ -201,7 +177,7 @@
     padding: 10px 8px;
     border-radius: 14px;
     border: 1px solid #eef2f7;
-    background: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.8);
     box-shadow: 0 2px 8px rgba(15,23,42,0.02);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
@@ -218,7 +194,6 @@
     cursor: pointer;
     border: 1px solid #e5e7eb;
     flex-shrink: 0;
-    touch-action: manipulation;
   }
   .art-meta { flex: 1; min-width: 0; }
   .wiki-link {
@@ -227,58 +202,21 @@
     text-decoration: none;
     cursor: pointer;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .wiki-link:hover { color: var(--link-hover); }
-  .art-year {
-    color: var(--muted);
-    font-size: 0.8rem;
-    margin-top: 2px;
-  }
-  .art-desc {
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-top: 7px;
-  }
-
-  .detail-container {
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .detail-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    margin-bottom: 8px;
-  }
-  .detail-image {
-    width: 100%;
-    max-height: 420px;
-    object-fit: contain;
-    border-radius: 14px;
-    background: #f8f9fb;
-    border: 1px solid #edf1f5;
-    box-shadow: var(--shadow-card);
-  }
-  .detail-text {
-    line-height: 1.7;
-    color: var(--text);
-    margin: 0;
-  }
+  .art-year { color: var(--muted); font-size: 0.8rem; }
+  .art-desc { color: var(--text); font-size: 0.88rem; line-height: 1.5; margin-top: 5px; }
 
   .hover-preview {
     position: absolute;
     pointer-events: none;
-    background: linear-gradient(180deg, #ffffff, #f8fbff);
-    border: 1px solid rgba(14, 41, 77, 0.08);
-    box-shadow: 0 8px 24px rgba(12,18,31,0.12);
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(14, 41, 77, 0.12);
+    box-shadow: 0 8px 24px rgba(12,18,31,0.15);
     border-radius: 10px;
     overflow: hidden;
     width: 260px;
-    max-width: 38vw;
     display: flex;
     gap: 10px;
     padding: 10px;
@@ -288,18 +226,11 @@
     transition: opacity 180ms ease, transform 180ms ease;
     z-index: 60;
   }
-  .hover-preview.visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  .hover-preview img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eef2f7; }
-  .hover-preview .hp-meta { display:flex; flex-direction:column; gap:6px; }
-  .hover-preview .hp-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
-  .hover-preview .hp-year { color: var(--muted); font-size: 0.85rem; }
-
-  @media (max-width: 800px), (hover: none) {
-    .hover-preview { display: none !important; }
-  }
+  .hover-preview.visible { opacity: 1; transform: translateY(0) scale(1); }
+  .hover-preview img { width: 100px; height: 70px; object-fit: cover; border-radius: 6px; }
+  .hover-preview .hp-meta { display:flex; flex-direction:column; gap:4px; }
+  .hover-preview .hp-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+  .hover-preview .hp-year { color: var(--muted); font-size: 0.8rem; }
 
   .zoom-controls {
     position: absolute;
@@ -322,20 +253,18 @@
     justify-content:center;
     cursor: pointer;
     font-weight: 600;
-    user-select: none;
   }
-  .zoom-btn:active { transform: scale(0.98); }
 
   #tooltip {
     position:absolute;
     pointer-events:none;
-    background: rgba(0,0,0,0.75);
+    background: rgba(15, 23, 42, 0.85);
     color: #fff;
-    padding: 6px 8px;
+    padding: 6px 10px;
     border-radius: 6px;
     font-size: 13px;
     display:none;
-    z-index: 10;
+    z-index: 70;
   }
 
   #modal {
@@ -344,64 +273,19 @@
     display:none;
     align-items:center;
     justify-content:center;
-    background: rgba(15, 23, 42, 0.52);
-    z-index:30;
+    background: rgba(15, 23, 42, 0.6);
+    z-index:100;
     padding: 24px;
   }
   #modal .modal-inner {
     background:#fff;
-    padding: 18px;
+    padding: 20px;
     border-radius: 18px;
     max-width: 90vw;
     max-height: 90vh;
     overflow:auto;
-    box-shadow: 0 22px 48px rgba(15,23,42,0.24);
   }
-  #modal img {
-    max-width:100%;
-    height:auto;
-    display:block;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-  }
-
-  @media (max-width: 800px) {
-    #container { flex-direction:column; }
-    #sidebar {
-      display: none;
-      width: 100%;
-      max-width: 100%;
-      margin-left: 0;
-      border-left:none;
-      border-top:1px solid rgba(148,163,184,0.18);
-      border-radius: 20px 20px 0 0;
-      box-shadow: 0 -12px 28px rgba(15,23,42,0.08);
-    }
-    #sidebar.visible {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      max-height: 48vh;
-      padding: 16px;
-    }
-    .art-item { padding: 9px; }
-    .thumb { width: 120px; height: 90px; }
-    .wiki-link { font-size: 1rem; }
-    .zoom-btn { width: 52px; height: 52px; border-radius: 12px; }
-    #modal .modal-inner {
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 0;
-      padding: 12px 12px 24px 12px;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start;
-      align-items:stretch;
-    }
-    #modal img { max-height: calc(100vh - 200px); object-fit: contain; }
-  }
+  #modal img { max-width:100%; height:auto; display:block; border-radius: 10px; }
 </style>
 </head>
 <body>
@@ -411,15 +295,15 @@
     <div id="hoverPreview" class="hover-preview" aria-hidden="true"></div>
     <div id="layerControls" class="layer-controls" aria-label="歷史圖層選擇">
       <button class="layer-btn active" data-layer="modern">現代</button>
+      <button class="layer-btn" data-layer="romanEmpire">羅馬帝國全盛期</button>
       <button class="layer-btn" data-layer="britishEmpire">大英帝國</button>
-      <button class="layer-btn" data-layer="romanEmpire">羅馬帝國</button>
-      <button class="layer-btn" data-layer="prussia">普魯士</button>
+      <button class="layer-btn" data-layer="prussia">普魯士王國</button>
       <button class="layer-btn" data-layer="japaneseEmpire">大日本帝國</button>
     </div>
   </div>
   <aside id="sidebar">
     <div class="sidebar-header">
-      <h2>請選擇一個國家</h2>
+      <h2>請選擇一個國家或歷史版圖</h2>
       <button id="clearBtn" class="btn-close">清除</button>
     </div>
     <div id="countryInfo" class="country-panel">
@@ -428,7 +312,7 @@
   </aside>
 </div>
 
-<div class="zoom-controls" aria-hidden="false">
+<div class="zoom-controls">
   <button id="zoomIn" class="zoom-btn" aria-label="放大">+</button>
   <button id="zoomOut" class="zoom-btn" aria-label="縮小">−</button>
   <button id="zoomReset" class="zoom-btn" aria-label="重置">◯</button>
@@ -446,165 +330,114 @@
 <script>
 const geojsonUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
+// 國家數字代碼轉 ISO2 縮寫
 const numericCountryToIso2 = {
-  '156': 'CN',
-  '392': 'JP',
-  '250': 'FR',
-  '840': 'US',
-  '124': 'CA',
-  '276': 'DE',
-  '826': 'GB',
-  '380': 'IT',
-  '643': 'RU',
-  '356': 'IN',
-  '710': 'ZA',
-  '76': 'BR',
-  '484': 'MX',
-  '032': 'AR',
-  '036': 'AU',
-  '554': 'NZ',
-  '704': 'VN',
-  '764': 'TH',
-  '702': 'SG',
-  '360': 'ID',
-  '458': 'MY',
-  '608': 'PH',
-  '410': 'KR',
-  '804': 'UA',
-  '398': 'KZ',
-  '050': 'BD',
-  '344': 'HK',
-  '528': 'NL',
-  '724': 'ES',
-  '752': 'SE',
-  '203': 'CZ',
-  '756': 'CH'
+  '156': 'CN', '392': 'JP', '250': 'FR', '840': 'US', '124': 'CA', '276': 'DE',
+  '826': 'GB', '380': 'IT', '643': 'RU', '356': 'IN', '710': 'ZA', '76': 'BR',
+  '484': 'MX', '032': 'AR', '036': 'AU', '554': 'NZ', '704': 'VN', '764': 'TH',
+  '702': 'SG', '360': 'ID', '458': 'MY', '608': 'PH', '410': 'KR', '804': 'UA',
+  '398': 'KZ', '050': 'BD', '344': 'HK', '528': 'NL', '724': 'ES', '752': 'SE',
+  '203': 'CZ', '756': 'CH', '158': 'TW', '246': 'FI'
 };
 
+// 英文名轉中文顯示名稱
 const englishToChinese = {
-  'China': '中國',
-  'Japan': '日本',
-  'United States': '美國',
-  'France': '法國',
-  'Germany': '德國',
-  'United Kingdom': '英國',
-  'South Korea': '韓國',
-  'Italy': '義大利',
-  'Spain': '西班牙',
-  'Russia': '俄羅斯',
-  'Canada': '加拿大',
-  'Australia': '澳大利亞'
+  'China': '中國', 'Japan': '日本', 'United States': '美國', 'France': '法國',
+  'Germany': '德國', 'United Kingdom': '英國', 'South Korea': '韓國', 'Italy': '義大利',
+  'Spain': '西班牙', 'Russia': '俄羅斯', 'Canada': '加拿大', 'Australia': '澳大利亞',
+  'Taiwan': '台灣', 'Finland': '芬蘭'
 };
 
+// 現代國家的畫作資料 (artworkData)
 const artworkData = {
-  "CN": [
-    { title: "中國的記憶", url: "China.png", year: 2026, desc: "0000" }
-  ],
-  "DE": [
-    { title: "德國的記憶", url: "Germany.png", year: 2026, desc: "0000" }
-  ],
-  "FR": [
-    { title: "法國的記憶", url: "france.png", year: 2026, desc: "0000" }
-  ],
+  "CN": [{ title: "中國的記憶", url: "China.png", year: 2026, desc: "關於中國的畫作與記憶" }],
+  "DE": [{ title: "德國的記憶", url: "Germany.png", year: 2026, desc: "關於德國的畫作與記憶" }],
+  "FR": [{ title: "法國的記憶", url: "france.png", year: 2026, desc: "關於法國的畫作與記憶" }],
   "JP": [
-    { title: "日本的記憶", url: "Japan.png", year: 2024, desc: "0000" }
+    { title: "日本的記憶", url: "Japan.png", year: 2024, desc: "關於日本的記憶" },
+    { title: "日本的記憶 - 生日", url: "japan birthday.jpg", year: 2026, desc: "關於日本生日的畫作與記憶" }
   ],
-  "CA": [
-    { title: "加拿大的記憶", url: "canda1.png", year: 2026, desc: "0000" }
+  "CA": [{ title: "加拿大的記憶", url: "canda1.png", year: 2026, desc: "關於加拿大的畫作與記憶" }],
+  "US": [{ title: "美國的記憶", url: "american.png", year: 2021, desc: "關於美國的畫作與記憶" }],
+  "ES": [{ title: "西班牙的記憶", url: "spain.jpg", year: 2026, desc: "關於西班牙的畫作與記憶" }],
+  "TW": [
+    { title: "台灣的記憶 - 新年", url: "taiwan newyear.jpg", year: 2026, desc: "關於台灣新年的畫作與記憶" },
+    { title: "台灣的記憶 - 中秋/月夜", url: "taiwan moon.jpg", year: 2026, desc: "關於台灣月夜與中秋的畫作與記憶" },
+    { title: "台灣的記憶 - 生日", url: "taiwan happybirthday.png", year: 2026, desc: "關於台灣生日的畫作與記憶" }
   ],
-  "US": [
-    { title: "美國的記憶", url: "american.png", year: 2021, desc: "0000" }
+  "FI": [{ title: "芬蘭的記憶", url: "finland.jpg", year: 2026, desc: "關於芬蘭的畫作與記憶" }],
+  "IT": [
+    { title: "義大利的記憶 - 威尼斯", url: "italy venice.jpg", year: 2026, desc: "關於義大利威尼斯的畫作與記憶" },
+    { title: "義大利的記憶 - 1P", url: "italy 1p.jpg", year: 2026, desc: "關於義大利（1P）的畫作與記憶" },
+    { title: "義大利的記憶 - 2P", url: "italy 2p.jpg", year: 2026, desc: "關於義大利（2P/異色）的畫作與記憶" }
   ]
 };
 
+// 🌟 歷史圖層專屬畫作資料庫
+const historicalArtworkData = {
+  "japaneseEmpire": [
+    { title: "大日本帝國的記憶", url: "empire of japan.jpg", year: 2026, desc: "大日本帝國時期的歷史畫作與記憶" }
+  ],
+  "britishEmpire": [
+    { title: "大英帝國的記憶", url: "british.jpg", year: 2026, desc: "大英帝國全盛時期的歷史畫作與記憶" }
+  ],
+  "romanEmpire": [],
+  "prussia": []
+};
+
 const layerDefinitions = [
-  { id: 'modern', label: '現代', visible: true, color: '#dcdcdc' },
-  { id: 'britishEmpire', label: '大英帝國', visible: false, color: '#7ec8e3' },
-  { id: 'romanEmpire', label: '羅馬帝國', visible: false, color: '#f5b7b1' },
-  { id: 'prussia', label: '普魯士', visible: false, color: '#a8d08d' },
-  { id: 'japaneseEmpire', label: '大日本帝國', visible: false, color: '#f7c6a6' }
+  { id: 'modern', label: '現代', visible: true, color: '#e5e7eb' },
+  { id: 'romanEmpire', label: '羅馬帝國全盛期', visible: false, color: 'rgba(239, 68, 68, 0.45)', focus: { center: [15, 42], scale: 3.2 } },
+  { id: 'britishEmpire', label: '大英帝國', visible: false, color: 'rgba(59, 130, 246, 0.55)', focus: { center: [20, 10], scale: 1.2 } },
+  { id: 'prussia', label: '普魯士王國', visible: false, color: 'rgba(34, 197, 94, 0.5)', focus: { center: [16, 52], scale: 5.5 } },
+  { id: 'japaneseEmpire', label: '大日本帝國', visible: false, color: 'rgba(249, 115, 22, 0.45)', focus: { center: [135, 35], scale: 3.8 } }
 ];
 
 const layerStates = Object.fromEntries(layerDefinitions.map(layer => [layer.id, layer]));
 
-function makeMultiPolygon(coordinatesList) {
-  return {
-    type: 'Feature',
-    geometry: {
-      type: 'MultiPolygon',
-      coordinates: coordinatesList
-    },
-    properties: {}
-  };
-}
-
-const historicalLayers = {
-  britishEmpire: {
-    type: 'FeatureCollection',
-    features: [
-      makeMultiPolygon([
-        [
-          [[-10, 50], [-8, 58], [2, 61], [10, 70], [18, 72], [10, 57], [12, 47], [5, 40], [-5, 35], [-10, 50]]
-        ],
-        [
-          [[-75, 60], [-70, 52], [-60, 49], [-50, 43], [-35, 38], [-25, 45], [-15, 50], [-25, 63], [-38, 68], [-52, 70], [-68, 69], [-75, 60]]
-        ],
-        [
-          [[-15, 35], [0, 30], [18, 22], [32, 18], [42, 10], [58, 0], [75, -10], [80, -30], [68, -38], [52, -35], [35, -20], [20, -8], [6, 6], [-5, 18], [-15, 35]]
-        ],
-        [
-          [[-15, -35], [0, -20], [20, -12], [35, -18], [44, -30], [48, -45], [35, -55], [12, -50], [-5, -45], [-15, -35]]
-        ],
-        [
-          [[110, -12], [120, -16], [135, -20], [145, -15], [147, -8], [138, 0], [120, 6], [112, 1], [110, -12]]
-        ]
-      ])
-    ]
-  },
+const historicalLayersGeoJSON = {
   romanEmpire: {
-    type: 'FeatureCollection',
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[[-9.5, 38.7], [-8.9, 43.5], [-1.5, 43.4], [3.2, 51.2], [10.2, 53.8], [19.1, 54.4], [27.5, 44.2], [35.2, 41.0], [42.0, 37.5], [36.0, 32.5], [32.5, 29.9], [25.0, 31.5], [12.5, 32.8], [-5.6, 36.0], [-9.5, 38.7]]]
+      }
+    }]
+  },
+  britishEmpire: {
+    type: "FeatureCollection",
     features: [
-      makeMultiPolygon([
-        [
-          [[-12, 44], [0, 39], [12, 42], [20, 48], [32, 46], [36, 40], [32, 30], [26, 22], [20, 16], [12, 18], [8, 12], [0, 12], [-8, 18], [-10, 30], [-12, 44]]
-        ],
-        [
-          [[-5, 12], [12, 8], [28, 0], [38, -8], [36, -20], [24, -28], [12, -30], [0, -26], [-5, -10], [-5, 12]]
-        ],
-        [
-          [[10, 36], [16, 32], [24, 30], [30, 34], [34, 40], [25, 51], [16, 52], [10, 45], [10, 36]]
-        ]
-      ])
+      // 1. 不列顛群島
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [[[-10.2, 51.5], [-6.2, 58.6], [-3.1, 58.7], [1.8, 52.8], [1.4, 50.7], [-5.2, 50.0], [-10.2, 51.5]]] }},
+      // 2. 加拿大區域
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [[[-140, 60], [-60, 60], [-60, 45], [-125, 49], [-140, 60]]] }},
+      // 3. 印度區域
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [[[68, 35], [89, 26], [92, 10], [72, 8], [68, 35]]] }},
+      // 4. 澳洲區域
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [[[112, -12], [153, -12], [153, -38], [112, -35], [112, -12]]] }}
     ]
   },
   prussia: {
-    type: 'FeatureCollection',
-    features: [
-      makeMultiPolygon([
-        [
-          [[7, 54], [12, 52], [15, 49], [18, 46], [15, 42], [10, 39], [7, 43], [4, 48], [7, 54]]
-        ],
-        [
-          [[10, 52], [16, 54], [20, 58], [18, 64], [12, 66], [8, 60], [10, 52]]
-        ]
-      ])
-    ]
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[[6.1, 50.7], [12.0, 54.3], [21.0, 55.7], [22.8, 54.4], [19.0, 50.0], [14.5, 50.2], [7.5, 49.2], [6.1, 50.7]]]
+      }
+    }]
   },
   japaneseEmpire: {
-    type: 'FeatureCollection',
-    features: [
-      makeMultiPolygon([
-        [
-          [[126, 35], [130, 33], [135, 34], [140, 38], [145, 42], [146, 46], [140, 50], [133, 52], [128, 47], [124, 42], [126, 35]]
-        ],
-        [
-          [[124, 30], [130, 22], [136, 18], [144, 20], [148, 26], [142, 28], [136, 30], [130, 35], [124, 30]]
-        ],
-        [
-          [[120, 45], [122, 42], [126, 44], [128, 48], [126, 52], [120, 50], [120, 45]]
-        ]
-      ])
-    ]
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[[120.0, 22.0], [122.0, 25.0], [129.0, 35.0], [130.0, 42.0], [142.0, 50.0], [145.0, 43.0], [135.0, 34.0], [126.0, 33.0], [120.0, 22.0]]]
+      }
+    }]
   }
 };
 
@@ -613,18 +446,22 @@ const height = Math.max(400, window.innerHeight);
 const svg = d3.select("#map").append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet");
-const g = svg.append('g').attr('id', 'countries');
+
+const g = svg.append('g').attr('id', 'map-group');
+const countriesGroup = g.append('g').attr('id', 'countries');
+const historicalLayerGroup = g.append('g').attr('id', 'historical-layer-group');
+
 const tooltip = d3.select("#tooltip");
 const hoverPreviewEl = document.getElementById('hoverPreview');
+
 const projection = d3.geoMercator()
   .scale((width / 2 / Math.PI) * 1.1)
   .translate([width / 2, height / 1.8]);
 const path = d3.geoPath().projection(projection);
 
 let zoomBehavior;
+let currentActiveLayer = 'modern';
 const sidebarEl = document.getElementById('sidebar');
-const historicalLayerGroup = g.append('g').attr('id', 'historical-layer-group');
-const historicalLayerMap = {};
 
 function triggerSidebarBounce() {
   sidebarEl.classList.remove('panel-bounce');
@@ -643,100 +480,90 @@ function hideSidebar() {
   sidebarEl.style.display = 'none';
 }
 
-function getNumericIso2(d) {
-  const id = String(d && d.id || '');
-  return numericCountryToIso2[id] || null;
-}
-
-function getCountryKey(d) {
-  const iso2 = getNumericIso2(d);
-  if (iso2) return iso2;
-
-  const props = d && d.properties ? d.properties : {};
-  const name = props.name || props.NAME || props.ADMIN || '';
-  const normalized = name.trim();
-  if (normalized) return normalized;
-  return null;
-}
-
-function getCountryDisplayName(d) {
-  const props = d && d.properties ? d.properties : {};
-  return props.name || props.NAME || props.ADMIN || getCountryKey(d) || '';
-}
-
-function getLocalizedDisplay(d) {
-  const en = getCountryDisplayName(d);
-  const zh = englishToChinese[en] || englishToChinese[getCountryKey(d)] || null;
-  return zh ? `${zh} (${en})` : en;
-}
-
-function propNameToEnglish(name) {
-  const map = { '中國': 'China', '日本': 'Japan', '美國': 'United States' };
-  return map[name] || name;
-}
-
 function renderHistoricalLayers() {
-  Object.keys(historicalLayers).forEach((layerId) => {
-    const fullLayer = historicalLayers[layerId];
-    const features = Array.isArray(fullLayer.features) ? fullLayer.features : [fullLayer];
-    const group = historicalLayerGroup.append('g')
-      .attr('class', `historical-layer historical-${layerId}`)
-      .style('opacity', layerStates[layerId].visible ? 0.78 : 0)
-      .style('display', layerStates[layerId].visible ? 'block' : 'none');
+  Object.keys(historicalLayersGeoJSON).forEach((layerId) => {
+    const layerData = historicalLayersGeoJSON[layerId];
+    const layerConfig = layerStates[layerId];
 
-    const selection = group.selectAll('path')
-      .data(features)
+    historicalLayerGroup.append('g')
+      .attr('class', `historical-layer historical-${layerId}`)
+      .style('display', 'none')
+      .selectAll('path')
+      .data(layerData.features)
       .join('path')
       .attr('d', path)
-      .attr('fill', layerStates[layerId].color)
-      .attr('fill-opacity', 0.75)
-      .attr('stroke', 'rgba(255,255,255,0.9)')
-      .attr('stroke-width', 0.9);
-
-    historicalLayerMap[layerId] = selection;
+      .attr('fill', layerConfig.color)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1.2)
+      .on("mouseover", (event) => {
+        tooltip.style("display", "block").text(layerConfig.label);
+        showHistoricalHoverPreview(layerId, event);
+      })
+      .on("mousemove", (event) => {
+        tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+        updateHoverPreviewPosition(event);
+      })
+      .on("mouseout", () => {
+        tooltip.style("display", "none");
+        hideHoverPreview();
+      })
+      .on("click", (event) => {
+        event.stopPropagation();
+        showArtworksForHistoricalLayer(layerId, layerConfig.label);
+      });
   });
 }
 
-function syncHistoricalLayerVisibility() {
+function zoomToLocation(center, scaleFactor) {
+  const [lon, lat] = center;
+  const projectedPoint = projection([lon, lat]);
+  const transform = d3.zoomIdentity
+    .translate(width / 2, height / 1.8)
+    .scale(scaleFactor)
+    .translate(-projectedPoint[0], -projectedPoint[1]);
+
+  svg.transition()
+    .duration(800)
+    .ease(d3.easeCubicInOut)
+    .call(zoomBehavior.transform, transform);
+}
+
+function syncHistoricalLayerVisibility(activeLayerId) {
+  currentActiveLayer = activeLayerId;
   Object.keys(layerStates).forEach((layerId) => {
-    const group = historicalLayerGroup.select(`.historical-${layerId}`);
-    if (!group.empty()) {
-      const shouldShow = !!layerStates[layerId].visible && layerId !== 'modern';
-      group.style('display', shouldShow ? 'block' : 'none')
-        .style('opacity', shouldShow ? 0.78 : 0);
+    const isTarget = (layerId === activeLayerId);
+    const layerEl = historicalLayerGroup.select(`.historical-${layerId}`);
+
+    if (!layerEl.empty()) {
+      if (isTarget && layerId !== 'modern') {
+        layerEl.style('display', 'block').style('opacity', 0).transition().duration(300).style('opacity', 1);
+        layerStates[layerId].visible = true;
+
+        if (layerStates[layerId].focus) {
+          zoomToLocation(layerStates[layerId].focus.center, layerStates[layerId].focus.scale);
+        }
+      } else {
+        layerEl.style('display', 'none');
+        layerStates[layerId].visible = false;
+      }
     }
   });
+
+  if (activeLayerId === 'modern') {
+    svg.transition().duration(600).call(zoomBehavior.transform, d3.zoomIdentity);
+  }
 }
 
 function attachLayerControls() {
   document.querySelectorAll('.layer-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const layerId = button.dataset.layer;
-      if (!layerId || !layerStates[layerId]) return;
+      if (!layerId) return;
 
-      if (layerId === 'modern') {
-        layerStates[layerId].visible = true;
-      } else {
-        layerStates[layerId].visible = !layerStates[layerId].visible;
-      }
+      document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
 
-      document.querySelectorAll('.layer-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.layer === layerId && (layerId === 'modern' || layerStates[layerId].visible));
-      });
-
-      if (layerId !== 'modern') {
-        const activeButtons = Object.values(layerStates).filter((layer) => layer.id !== 'modern' && layer.visible).length;
-        const modernBtn = document.querySelector('.layer-btn[data-layer="modern"]');
-        if (activeButtons === 0) {
-          layerStates.modern.visible = true;
-          modernBtn.classList.add('active');
-        } else if (layerStates.modern.visible && activeButtons > 0) {
-          layerStates.modern.visible = false;
-          modernBtn.classList.remove('active');
-        }
-      }
-
-      syncHistoricalLayerVisibility();
+      syncHistoricalLayerVisibility(layerId);
     });
   });
 }
@@ -745,19 +572,20 @@ function renderMap() {
   d3.json(geojsonUrl).then(world => {
     const countries = topojson.feature(world, world.objects.countries);
 
-    g.selectAll("path")
+    countriesGroup.selectAll("path")
       .data(countries.features)
       .join("path")
         .attr("class", "country")
         .attr("d", path)
         .on("mouseover", (event, d) => {
+          if (currentActiveLayer !== 'modern') return;
           d3.select(event.currentTarget).raise();
           tooltip.style("display", "block").text(getLocalizedDisplay(d));
           showHoverPreview(d, event);
         })
-        .on("mousemove", (event, d) => {
-          tooltip.style("left", (event.pageX + 12) + "px")
-                 .style("top", (event.pageY + 12) + "px");
+        .on("mousemove", (event) => {
+          if (currentActiveLayer !== 'modern') return;
+          tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
           updateHoverPreviewPosition(event);
         })
         .on("mouseout", () => {
@@ -765,16 +593,17 @@ function renderMap() {
           hideHoverPreview();
         })
         .on("click", (event, d) => {
-          g.selectAll(".country").classed("selected", false);
+          if (currentActiveLayer !== 'modern') return;
+          countriesGroup.selectAll(".country").classed("selected", false);
           d3.select(event.currentTarget).classed("selected", true);
           showArtworksForCountry(d);
         });
 
     zoomBehavior = d3.zoom()
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 10])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
-        g.selectAll('.country').style('stroke-width', (0.5 / event.transform.k));
+        countriesGroup.selectAll('.country').style('stroke-width', (0.5 / event.transform.k));
       });
 
     svg.call(zoomBehavior);
@@ -783,349 +612,126 @@ function renderMap() {
     attachLayerControls();
 
   }).catch(err => {
-    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地圖載入失敗，請檢查網路或 TopoJSON 連線。</p>';
-    console.error(err);
+    console.error('地圖載入錯誤:', err);
   });
+}
+
+function getNumericIso2(d) {
+  const id = String(d && d.id || '');
+  return numericCountryToIso2[id] || null;
+}
+
+function getCountryKey(d) {
+  return getNumericIso2(d) || (d && d.properties ? d.properties.name : null);
+}
+
+function getCountryDisplayName(d) {
+  const props = d && d.properties ? d.properties : {};
+  return props.name || getCountryKey(d) || '';
+}
+
+function getLocalizedDisplay(d) {
+  const en = getCountryDisplayName(d);
+  const zh = englishToChinese[en] || null;
+  return zh ? `${zh} (${en})` : en;
 }
 
 function attachZoomControls() {
-  const zoomIn = document.getElementById('zoomIn');
-  const zoomOut = document.getElementById('zoomOut');
-  const zoomReset = document.getElementById('zoomReset');
-
-  zoomIn.addEventListener('click', () => {
-    svg.transition().duration(250).call(zoomBehavior.scaleBy, 1.4);
-  });
-  zoomOut.addEventListener('click', () => {
-    svg.transition().duration(250).call(zoomBehavior.scaleBy, 1 / 1.4);
-  });
-  zoomReset.addEventListener('click', () => {
-    svg.transition().duration(350).call(zoomBehavior.transform, d3.zoomIdentity);
-  });
-}
-
-function findArtForFeature(d) {
-  const englishName = getCountryDisplayName(d);
-  const key = getCountryKey(d);
-  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), englishName, propNameToEnglish(englishName)];
-  for (const k of possibleKeys) {
-    if (!k) continue;
-    if (artworkData[k]) return artworkData[k];
-  }
-  if (artworkData[englishName]) return artworkData[englishName];
-  return null;
-}
-
-function getPreviewArt(d) {
-  const arts = findArtForFeature(d);
-  if (!arts || arts.length === 0) return null;
-  return arts[0];
-}
-
-function showHoverPreview(d, event) {
-  try {
-    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
-
-    const art = getPreviewArt(d);
-    if (!art) return;
-
-    hoverPreviewEl.innerHTML = '';
-    const img = document.createElement('img');
-    img.src = art.url;
-    img.alt = art.title || '';
-
-    const meta = document.createElement('div');
-    meta.className = 'hp-meta';
-    const title = document.createElement('div');
-    title.className = 'hp-title';
-    title.textContent = art.title || '';
-    const year = document.createElement('div');
-    year.className = 'hp-year';
-    year.textContent = art.year ? String(art.year) : '';
-    meta.appendChild(title);
-    meta.appendChild(year);
-
-    hoverPreviewEl.appendChild(img);
-    hoverPreviewEl.appendChild(meta);
-
-    updateHoverPreviewPosition(event);
-    hoverPreviewEl.classList.add('visible');
-    hoverPreviewEl.setAttribute('aria-hidden', 'false');
-  } catch (e) {
-    console.error('hover preview error', e);
-  }
-}
-
-function updateHoverPreviewPosition(event) {
-  if (!hoverPreviewEl) return;
-  const padding = 12;
-  const boxW = hoverPreviewEl.offsetWidth || 260;
-  const boxH = hoverPreviewEl.offsetHeight || 100;
-  let x = (event.pageX || event.clientX + window.scrollX) + 18;
-  let y = (event.pageY || event.clientY + window.scrollY) + 18;
-
-  const winW = window.innerWidth;
-  const winH = window.innerHeight;
-
-  if (x + boxW + padding > winW) {
-    x = (event.pageX || event.clientX + window.scrollX) - boxW - 18;
-  }
-  if (y + boxH + padding > (window.scrollY + winH)) {
-    y = (event.pageY || event.clientY + window.scrollY) - boxH - 18;
-  }
-
-  hoverPreviewEl.style.left = x + 'px';
-  hoverPreviewEl.style.top = y + 'px';
-}
-
-function hideHoverPreview() {
-  if (!hoverPreviewEl) return;
-  hoverPreviewEl.classList.remove('visible');
-  hoverPreviewEl.setAttribute('aria-hidden', 'true');
+  document.getElementById('zoomIn').addEventListener('click', () => svg.transition().duration(250).call(zoomBehavior.scaleBy, 1.4));
+  document.getElementById('zoomOut').addEventListener('click', () => svg.transition().duration(250).call(zoomBehavior.scaleBy, 1 / 1.4));
+  document.getElementById('zoomReset').addEventListener('click', () => svg.transition().duration(350).call(zoomBehavior.transform, d3.zoomIdentity));
 }
 
 function showArtworksForCountry(d) {
   showSidebar();
-
-  const englishName = getCountryDisplayName(d);
-  const localized = getLocalizedDisplay(d);
   const key = getCountryKey(d);
-  const possibleKeys = [key, (key || '').toUpperCase(), (key || '').toLowerCase(), englishName, propNameToEnglish(englishName)];
-  let arts = null;
+  const localized = getLocalizedDisplay(d);
+  const arts = artworkData[key] || artworkData[getCountryDisplayName(d)];
 
-  for (const k of possibleKeys) {
-    if (!k) continue;
-    if (artworkData[k]) {
-      arts = artworkData[k];
-      break;
-    }
-  }
+  renderArtListInSidebar(localized, arts);
+}
 
-  if (!arts && artworkData[englishName]) arts = artworkData[englishName];
+function showArtworksForHistoricalLayer(layerId, layerLabel) {
+  showSidebar();
+  const arts = historicalArtworkData[layerId] || [];
+  renderArtListInSidebar(layerLabel, arts);
+}
 
+function renderArtListInSidebar(titleName, arts) {
   const container = document.getElementById('countryInfo');
-  container.innerHTML = '';
-
-  const header = document.createElement('div');
-  header.className = 'detail-header';
-
-  const title = document.createElement('h3');
-  title.className = 'country-title';
-  title.textContent = localized;
-
-  const backBtn = document.createElement('button');
-  backBtn.className = 'btn-close';
-  backBtn.textContent = '回到地圖';
-  backBtn.onclick = () => clearSelection();
-
-  header.appendChild(title);
-  header.appendChild(backBtn);
-  container.appendChild(header);
+  container.innerHTML = `<div class="detail-header"><h3 class="country-title">${titleName}</h3><button class="btn-close" onclick="clearSelection()">回到地圖</button></div>`;
 
   if (!arts || arts.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'no-art';
-    p.textContent = '該國家暫無畫作，您可以在 artworkData 中加入對應作品。';
-    container.appendChild(p);
+    container.innerHTML += '<p class="no-art">該時期或版圖暫無畫作紀錄。</p>';
     return;
   }
 
   const list = document.createElement('div');
   list.className = 'art-list';
-
-  arts.forEach((art, idx) => {
-    const item = document.createElement('div');
-    item.className = 'art-item';
-
-    const img = document.createElement('img');
-    img.className = 'thumb';
-    img.src = art.url;
-    img.alt = art.title || '';
-    img.onclick = () => openModal(art);
-
-    const meta = document.createElement('div');
-    meta.className = 'art-meta';
-
-    const titleLink = document.createElement('span');
-    titleLink.className = 'wiki-link';
-    titleLink.textContent = art.title || 'Untitled';
-    titleLink.onclick = () => showSubpage(englishName, idx, arts);
-
-    const year = document.createElement('div');
-    year.className = 'art-year';
-    year.textContent = art.year ? String(art.year) : '';
-
-    const desc = document.createElement('div');
-    desc.className = 'art-desc';
-    desc.textContent = art.desc || '';
-
-    meta.appendChild(titleLink);
-    meta.appendChild(year);
-    meta.appendChild(desc);
-    item.appendChild(img);
-    item.appendChild(meta);
-    list.appendChild(item);
+  arts.forEach(art => {
+    list.innerHTML += `
+      <div class="art-item">
+        <img class="thumb" src="${art.url}" alt="${art.title}" onclick="openModal('${art.url}', '${art.title}')">
+        <div class="art-meta">
+          <span class="wiki-link">${art.title}</span>
+          <div class="art-year">${art.year}年</div>
+          <div class="art-desc">${art.desc}</div>
+        </div>
+      </div>
+    `;
   });
-
   container.appendChild(list);
 }
 
-function showSubpage(countryEnglishName, artIndex, arts) {
-  showSidebar();
-
-  const container = document.getElementById('countryInfo');
-  const art = arts[artIndex];
-  if (!art) return;
-
-  container.innerHTML = '';
-
-  const header = document.createElement('div');
-  header.className = 'detail-header';
-
-  const title = document.createElement('h3');
-  title.className = 'country-title';
-  title.textContent = art.title || countryEnglishName;
-
-  const back = document.createElement('button');
-  back.className = 'mini-link';
-  back.textContent = '← 返回列表';
-  back.onclick = () => {
-    const features = svg.selectAll('path').data();
-    const feature = features.find(f => getCountryDisplayName(f) === countryEnglishName);
-    if (feature) showArtworksForCountry(feature);
-    else {
-      document.getElementById('countryInfo').innerHTML = '<p class="no-art">無法找到該國家的地圖資料。</p>';
-    }
-    history.pushState(null, '', '#');
-  };
-
-  header.appendChild(title);
-  header.appendChild(back);
-  container.appendChild(header);
-
-  const detail = document.createElement('div');
-  detail.className = 'detail-container';
-
-  const img = document.createElement('img');
-  img.className = 'detail-image';
-  img.src = art.url;
-  img.alt = art.title || '';
-  img.onclick = () => openModal(art);
-
-  const desc = document.createElement('p');
-  desc.className = 'detail-text';
-  desc.textContent = art.desc || '';
-
-  if (art.year) {
-    const year = document.createElement('p');
-    year.className = 'detail-text';
-    year.textContent = '年份：' + art.year;
-    detail.appendChild(year);
-  }
-
-  detail.appendChild(img);
-  detail.appendChild(desc);
-  container.appendChild(detail);
-
-  history.pushState(null, '', `#art/${encodeURIComponent(countryEnglishName)}/${artIndex}`);
+function showHoverPreview(d, event) {
+  const arts = artworkData[getCountryKey(d)] || artworkData[getCountryDisplayName(d)];
+  if (!arts || !arts[0]) return;
+  const art = arts[0];
+  hoverPreviewEl.innerHTML = `<img src="${art.url}"><div class="hp-meta"><div class="hp-title">${art.title}</div><div class="hp-year">${art.year}</div></div>`;
+  hoverPreviewEl.classList.add('visible');
+  updateHoverPreviewPosition(event);
 }
 
-function openModal(art) {
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = '';
+function showHistoricalHoverPreview(layerId, event) {
+  const arts = historicalArtworkData[layerId];
+  if (!arts || !arts[0]) return;
+  const art = arts[0];
+  hoverPreviewEl.innerHTML = `<img src="${art.url}"><div class="hp-meta"><div class="hp-title">${art.title}</div><div class="hp-year">${art.year}</div></div>`;
+  hoverPreviewEl.classList.add('visible');
+  updateHoverPreviewPosition(event);
+}
 
-  const h = document.createElement('h3');
-  h.textContent = art.title || '';
+function updateHoverPreviewPosition(event) {
+  if (!hoverPreviewEl) return;
+  hoverPreviewEl.style.left = (event.pageX + 15) + 'px';
+  hoverPreviewEl.style.top = (event.pageY + 15) + 'px';
+}
 
-  const img = document.createElement('img');
-  img.src = art.url;
-  img.alt = art.title || '';
+function hideHoverPreview() {
+  if (hoverPreviewEl) hoverPreviewEl.classList.remove('visible');
+}
 
-  const p = document.createElement('p');
-  p.textContent = art.desc || '';
-
-  modalContent.appendChild(h);
-  modalContent.appendChild(img);
-  modalContent.appendChild(p);
+function openModal(url, title) {
+  document.getElementById('modalContent').innerHTML = `<h3>${title}</h3><img src="${url}">`;
   document.getElementById('modal').style.display = 'flex';
 }
-
-let modalTouchStartY = null;
-document.getElementById('modal').addEventListener('touchstart', (e) => {
-  if (e.touches && e.touches[0]) modalTouchStartY = e.touches[0].clientY;
-});
-document.getElementById('modal').addEventListener('touchmove', (e) => {
-  if (!modalTouchStartY) return;
-  const y = e.touches[0].clientY;
-  const diff = y - modalTouchStartY;
-  if (diff > 120) {
-    closeModal();
-    modalTouchStartY = null;
-  }
-});
 
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
 }
 
 function clearSelection() {
-  g.selectAll('.country').classed('selected', false);
-  document.getElementById('countryInfo').innerHTML = '<p class="no-art">點選地圖上的國家以查看對應畫作。</p>';
+  countriesGroup.selectAll('.country').classed('selected', false);
+  document.getElementById('countryInfo').innerHTML = '<p class="no-art">點選地圖上的國家或歷史版圖以查看對應畫作。</p>';
   hideSidebar();
-  history.pushState(null, '', '#');
-}
-
-function handleHashOnLoad() {
-  const hash = location.hash || '';
-  if (!hash) return;
-  const match = hash.match(/^#art\/(.+)\/(\d+)$/);
-  if (!match) return;
-
-  const countryName = decodeURIComponent(match[1]);
-  const artIndex = Number(match[2]);
-
-  const tryShow = () => {
-    const features = svg.selectAll('path').data();
-    if (!features || features.length === 0) {
-      setTimeout(tryShow, 200);
-      return;
-    }
-
-    const feature = features.find(f => {
-      const name = getCountryDisplayName(f);
-      const key = getCountryKey(f);
-      return name === countryName || key === countryName || (f.properties && (f.properties.name === countryName || f.properties.ADMIN === countryName));
-    });
-
-    if (feature) {
-      g.selectAll('.country').classed('selected', false);
-      svg.selectAll('path')
-        .filter(d => getCountryDisplayName(d) === countryName || getCountryKey(d) === countryName)
-        .classed('selected', true);
-
-      showSidebar();
-
-      const arts = artworkData[getCountryKey(feature)] || artworkData[getCountryDisplayName(feature)] || artworkData[feature.properties?.name];
-      if (arts && arts[artIndex]) {
-        showSubpage(getCountryDisplayName(feature), artIndex, arts);
-      } else {
-        showArtworksForCountry(feature);
-      }
-    }
-  };
-
-  tryShow();
 }
 
 document.getElementById('clearBtn').addEventListener('click', clearSelection);
 document.getElementById('closeModal').addEventListener('click', closeModal);
-document.getElementById('modal').addEventListener('click', (e) => {
-  if (e.target.id === 'modal') closeModal();
-});
+document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
 
 hideSidebar();
 renderMap();
-handleHashOnLoad();
 </script>
 </body>
 </html>
